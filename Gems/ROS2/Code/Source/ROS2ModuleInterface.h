@@ -2,6 +2,7 @@
 #include <AzCore/Memory/SystemAllocator.h>
 #include <AzCore/Module/Module.h>
 #include <ROS2SystemComponent.h>
+#include <ROS2LidarSensorComponent.h>
 
 namespace ROS2
 {
@@ -20,6 +21,7 @@ namespace ROS2
             // This happens through the [MyComponent]::Reflect() function.
             m_descriptors.insert(m_descriptors.end(), {
                 ROS2SystemComponent::CreateDescriptor(),
+                ROS2LidarSensorComponent::CreateDescriptor(),
                 });
         }
 

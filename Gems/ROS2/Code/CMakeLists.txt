@@ -14,7 +14,6 @@ include(${pal_dir}/PAL_${PAL_PLATFORM_NAME_LOWERCASE}.cmake)
 
 # Location of compiler-specific flags
 set(common_source_dir ${CMAKE_CURRENT_LIST_DIR}/Platform/Common)
-include(${CMAKE_CURRENT_LIST_DIR}/ros2_environment_source.cmake)
 
 # Add the ROS2.Static target
 # Note: We include the common files and the platform specific files which are set in ros2_common_files.cmake
@@ -39,7 +38,7 @@ ly_add_target(
             AZ::AzFramework
 )
 
-target_depends_on_ros2_packages(ROS2.Static rclcpp std_msgs)
+target_depends_on_ros2_packages(ROS2.Static rclcpp std_msgs sensor_msgs)
 
 #TODO - export version/distro info to detect conflict (Gem built with ros X but trying to build Project with ros Y),
 #TODO - check within Project build whether there is a match

@@ -3,6 +3,7 @@
 
 #include <AzCore/EBus/EBus.h>
 #include <AzCore/Interface/Interface.h>
+#include <rclcpp/node.hpp>
 
 namespace ROS2
 {
@@ -11,7 +12,9 @@ namespace ROS2
     public:
         AZ_RTTI(ROS2Requests, "{a9bdbff6-e644-430d-8096-cdb53c88e8fc}");
         virtual ~ROS2Requests() = default;
+
         // Put your public methods here
+        virtual std::shared_ptr<rclcpp::Node> GetNode() const = 0;
     };
     
     class ROS2BusTraits

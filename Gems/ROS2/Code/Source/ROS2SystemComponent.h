@@ -29,6 +29,8 @@ namespace ROS2
         ROS2SystemComponent();
         ~ROS2SystemComponent();
 
+        std::shared_ptr<rclcpp::Node> GetNode() const { return ros2_node; }
+
     protected:
         ////////////////////////////////////////////////////////////////////////
         // ROS2RequestBus interface implementation
