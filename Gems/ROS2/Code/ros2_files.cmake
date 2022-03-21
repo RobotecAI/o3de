@@ -6,4 +6,7 @@ set(FILES
     Source/ROS2SystemComponent.h
     Source/ROS2LidarSensorComponent.cpp
     Source/ROS2LidarSensorComponent.h
+    Source/LidarRaycaster.cpp
+    Source/LidarRaycaster.h
+    Source/LidarTemplate.h
 )
