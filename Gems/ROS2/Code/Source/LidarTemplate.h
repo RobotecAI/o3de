@@ -5,6 +5,7 @@
 #include <AzCore/Math/Quaternion.h>
 #include <AzCore/Math/Matrix4x4.h>
 #include <AzCore/Utils/Utils.h>
+#include <AzCore/Math/MathUtils.h>
 
 namespace ROS2
 {
@@ -66,25 +67,39 @@ namespace ROS2
         }
 
         // TODO - lidars in reality do not have uniform distributions - populating needs to be defined per model
-        static void PopulateRayDirections(LidarTemplate::LidarModel model, AZStd::vector<AZ::Vector3> &directions)
+        static AZStd::vector<AZ::Vector3> PopulateRayDirections(LidarTemplate::LidarModel model)
         {
-            directions.clear();
             auto lidarTemplate = GetTemplate(model);
-            float vertIncrement = (lidarTemplate.m_maxVAngle - lidarTemplate.m_minVAngle) / (float)(lidarTemplate.m_layers);
-            float azimuthIncrAngle = (lidarTemplate.m_maxHAngle - lidarTemplate.m_minHAngle) / lidarTemplate.m_numberOfIncrements;
+
+            const float minVertAngle = AZ::DegToRad(lidarTemplate.m_minVAngle);
+            const float maxVertAngle = AZ::DegToRad(lidarTemplate.m_maxVAngle);
+            const float minHorAngle = AZ::DegToRad(lidarTemplate.m_minHAngle);
+            const float maxHorAngle = AZ::DegToRad(lidarTemplate.m_maxHAngle);
+
+            const float verticalStep = (maxVertAngle - minVertAngle)
+                / static_cast<float>(lidarTemplate.m_layers);
+            const float horizontalStep = (maxHorAngle - minHorAngle)
+                / static_cast<float>(lidarTemplate.m_numberOfIncrements);
+
+            AZStd::vector<AZ::Vector3> directions;
 
             for (int incr = 0; incr < lidarTemplate.m_numberOfIncrements; incr++)
             {
                 for (int layer = 0; layer < lidarTemplate.m_layers; layer++)
                 {
-                    float angle = lidarTemplate.m_minVAngle + (float)layer * vertIncrement;
-                    float azimuth = lidarTemplate.m_minHAngle + incr * azimuthIncrAngle;
-                    AZ::Vector3 angles(0, angle, azimuth);
-                    AZ::Vector3 normalizedForward = AZ::Vector3::CreateAxisX(1.0f);
-                    auto quat = AZ::Quaternion::CreateFromEulerAnglesDegrees(angles);
-                    directions.push_back(quat.TransformVector(normalizedForward));
+                    // roll is equal to 0, so it's skipped in the calculations
+                    const float pitch = minVertAngle + layer * verticalStep;
+                    const float yaw = minHorAngle + incr * horizontalStep;
+
+                    const float x = AZ::Cos(yaw) * AZ::Cos(pitch);
+                    const float y = AZ::Sin(yaw) * AZ::Cos(pitch);
+                    const float z = AZ::Sin(pitch);
+
+                    directions.push_back(AZ::Vector3(x, y, z));
                 }
             }
+
+            return directions;
         }
     };
 }
