@@ -6,8 +6,7 @@
 #include <ROS2/ROS2Bus.h>
 
 #include <memory>
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "rclcpp/node.hpp"
 
 namespace ROS2
 {
@@ -51,7 +50,6 @@ namespace ROS2
     
     private:
         std::shared_ptr<rclcpp::Node> ros2_node;
-        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr chat_publisher; 
     };
 
 } // namespace ROS2

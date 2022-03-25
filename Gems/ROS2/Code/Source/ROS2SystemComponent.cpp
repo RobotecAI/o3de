@@ -64,7 +64,6 @@ namespace ROS2
     {
         rclcpp::init(0, 0);
         ros2_node = std::make_shared<rclcpp::Node>("o3de_ros2_node");
-        chat_publisher = ros2_node->create_publisher<std_msgs::msg::String>("chatter_o3de", 10);
     }
 
     void ROS2SystemComponent::Activate()
@@ -81,10 +80,5 @@ namespace ROS2
 
     void ROS2SystemComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)
     {
-        static int i = 0;
-        auto message = std_msgs::msg::String();
-        message.data = "O3DE says hello to ROS " + std::to_string(i++);
-        chat_publisher->publish(message);
     }
-
 } // namespace ROS2
