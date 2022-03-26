@@ -7,6 +7,8 @@
 
 #include <memory>
 #include "rclcpp/node.hpp"
+#include "builtin_interfaces/msg/time.hpp"
+#include "SimulationClock.h"
 
 namespace ROS2
 {
@@ -29,6 +31,7 @@ namespace ROS2
         ~ROS2SystemComponent();
 
         std::shared_ptr<rclcpp::Node> GetNode() const { return ros2_node; }
+        builtin_interfaces::msg::Time GetROSTimestamp() const;
 
     protected:
         ////////////////////////////////////////////////////////////////////////
@@ -50,6 +53,7 @@ namespace ROS2
     
     private:
         std::shared_ptr<rclcpp::Node> ros2_node;
+        SimulationClock simulation_clock;
     };
 
 } // namespace ROS2

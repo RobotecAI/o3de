@@ -38,7 +38,7 @@ ly_add_target(
             AZ::AzFramework
 )
 
-target_depends_on_ros2_packages(ROS2.Static rclcpp std_msgs sensor_msgs)
+target_depends_on_ros2_packages(ROS2.Static rclcpp builtin_interfaces std_msgs sensor_msgs)
 
 #TODO - export version/distro info to detect conflict (Gem built with ros X but trying to build Project with ros Y),
 #TODO - check within Project build whether there is a match
