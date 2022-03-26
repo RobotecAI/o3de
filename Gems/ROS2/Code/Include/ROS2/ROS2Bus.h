@@ -4,6 +4,7 @@
 #include <AzCore/EBus/EBus.h>
 #include <AzCore/Interface/Interface.h>
 #include <rclcpp/node.hpp>
+#include <builtin_interfaces/msg/time.hpp>
 
 namespace ROS2
 {
@@ -15,6 +16,7 @@ namespace ROS2
 
         // Put your public methods here
         virtual std::shared_ptr<rclcpp::Node> GetNode() const = 0;
+        virtual builtin_interfaces::msg::Time GetROSTimestamp() const = 0;
     };
     
     class ROS2BusTraits

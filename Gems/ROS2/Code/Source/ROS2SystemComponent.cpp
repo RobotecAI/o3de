@@ -4,6 +4,7 @@
 #include <AzCore/Serialization/SerializeContext.h>
 #include <AzCore/Serialization/EditContext.h>
 #include <AzCore/Serialization/EditContextConstants.inl>
+#include <AzCore/Time/ITime.h>
 
 namespace ROS2
 {
@@ -78,7 +79,13 @@ namespace ROS2
         ROS2RequestBus::Handler::BusDisconnect();
     }
 
+    builtin_interfaces::msg::Time ROS2SystemComponent::GetROSTimestamp() const
+    {
+        return simulation_clock.GetROSTimestamp();
+    }
+
     void ROS2SystemComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)
     {
+        simulation_clock.Tick();
     }
 } // namespace ROS2
