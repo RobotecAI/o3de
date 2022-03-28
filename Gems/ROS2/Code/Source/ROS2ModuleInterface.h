@@ -2,7 +2,7 @@
 #include <AzCore/Memory/SystemAllocator.h>
 #include <AzCore/Module/Module.h>
 #include <ROS2SystemComponent.h>
-#include <ROS2LidarSensorComponent.h>
+#include <Lidar/ROS2LidarSensorComponent.h>
 
 namespace ROS2
 {
