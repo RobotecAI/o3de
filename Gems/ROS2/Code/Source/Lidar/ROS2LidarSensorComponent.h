@@ -7,8 +7,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
-#include "LidarTemplate.h"
-#include "LidarRaycaster.h"
+#include "Lidar/LidarTemplate.h"
+#include "Lidar/LidarRaycaster.h"
 
 namespace ROS2
 {
