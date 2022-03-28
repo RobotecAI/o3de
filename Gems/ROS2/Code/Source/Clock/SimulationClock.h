@@ -22,4 +22,4 @@ namespace ROS2
 
         rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr m_clockPublisher;
     };
-}
+} // namespace ROS2
