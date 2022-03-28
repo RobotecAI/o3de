@@ -30,8 +30,8 @@ namespace ROS2
         ROS2SystemComponent();
         ~ROS2SystemComponent();
 
-        std::shared_ptr<rclcpp::Node> GetNode() const;
-        builtin_interfaces::msg::Time GetROSTimestamp() const;
+        std::shared_ptr<rclcpp::Node> GetNode() const override;
+        builtin_interfaces::msg::Time GetROSTimestamp() const override;
 
     protected:
         ////////////////////////////////////////////////////////////////////////
