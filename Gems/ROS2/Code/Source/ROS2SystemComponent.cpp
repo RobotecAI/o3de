@@ -59,12 +59,15 @@ namespace ROS2
         {
             ROS2Interface::Unregister(this);
         }
+        rclcpp::shutdown();
     }
 
     void ROS2SystemComponent::Init()
     {
         rclcpp::init(0, 0);
         ros2_node = std::make_shared<rclcpp::Node>("o3de_ros2_node");
+        executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+        executor->add_node(ros2_node);
     }
 
     void ROS2SystemComponent::Activate()
@@ -86,6 +89,13 @@ namespace ROS2
 
     void ROS2SystemComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)
     {
-        simulation_clock.Tick();
+        if (rclcpp::ok())
+        {
+            simulation_clock.Tick();
+
+            //TODO - this can be in another thread and done with a higher resolution for less latency.
+            //TODO - callbacks will be called in the spinning thread (here, the main thread).
+            executor->spin_some();
+        }
     }
 } // namespace ROS2

@@ -6,7 +6,7 @@
 #include <ROS2/ROS2Bus.h>
 
 #include <memory>
-#include "rclcpp/node.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "builtin_interfaces/msg/time.hpp"
 #include "SimulationClock.h"
 
@@ -53,6 +53,7 @@ namespace ROS2
     
     private:
         std::shared_ptr<rclcpp::Node> ros2_node;
+        std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
         SimulationClock simulation_clock;
     };
 
