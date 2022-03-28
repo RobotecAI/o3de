@@ -30,7 +30,7 @@ namespace ROS2
         ROS2SystemComponent();
         ~ROS2SystemComponent();
 
-        std::shared_ptr<rclcpp::Node> GetNode() const { return ros2_node; }
+        std::shared_ptr<rclcpp::Node> GetNode() const;
         builtin_interfaces::msg::Time GetROSTimestamp() const;
 
     protected:
@@ -52,9 +52,9 @@ namespace ROS2
         ////////////////////////////////////////////////////////////////////////
     
     private:
-        std::shared_ptr<rclcpp::Node> ros2_node;
-        std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
-        SimulationClock simulation_clock;
+        std::shared_ptr<rclcpp::Node> m_ros2Node;
+        std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> m_executor;
+        SimulationClock m_simulationClock;
     };
 
 } // namespace ROS2
