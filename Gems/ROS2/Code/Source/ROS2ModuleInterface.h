@@ -9,6 +9,7 @@
 #include <AzCore/Module/Module.h>
 #include <ROS2SystemComponent.h>
 #include <Lidar/ROS2LidarSensorComponent.h>
+#include <RobotControl/ROS2RobotControlComponent.h>
 
 namespace ROS2
 {
@@ -28,6 +29,7 @@ namespace ROS2
             m_descriptors.insert(m_descriptors.end(), {
                 ROS2SystemComponent::CreateDescriptor(),
                 ROS2LidarSensorComponent::CreateDescriptor(),
+                ROS2RobotControlComponent::CreateDescriptor(),
                 });
         }
 
