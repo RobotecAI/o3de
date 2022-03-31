@@ -11,4 +11,6 @@ set(FILES
     Source/ROS2SystemComponent.h
     Source/Clock/SimulationClock.cpp
     Source/Clock/SimulationClock.h
+    Source/UrdfParser.cpp
+    Source/UrdfParser.h
 )
