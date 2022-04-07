@@ -18,6 +18,8 @@ set(FILES
     Source/Utilities/ROS2Conversions.h
     Source/Clock/SimulationClock.cpp
     Source/Clock/SimulationClock.h
-    Source/UrdfParser.cpp
-    Source/UrdfParser.h
+    Source/Urdf/UrdfParser.cpp
+    Source/Urdf/UrdfParser.h
+    Source/Urdf/UrdfToFbxConverter.cpp
+    Source/Urdf/UrdfToFbxConverter.h
 )
