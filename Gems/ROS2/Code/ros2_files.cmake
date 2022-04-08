@@ -22,4 +22,5 @@ set(FILES
     Source/Urdf/UrdfParser.h
     Source/Urdf/UrdfToFbxConverter.cpp
     Source/Urdf/UrdfToFbxConverter.h
+    Source/Urdf/Fbx.h
 )
