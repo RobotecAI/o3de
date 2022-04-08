@@ -11,6 +11,8 @@
 #include <fstream>
 #include <string>
 
+#include <AzCore/Debug/Trace.h>
+
 namespace ROS2
 {
     using Node = Fbx::Node;
@@ -30,6 +32,11 @@ namespace ROS2
     std::vector<Node> Fbx::Node::GetChildren() const
     {
         return m_children;
+    }
+
+    bool Fbx::Node::HasChildren() const
+    {
+        return !m_children.empty();
     }
 
     void Node::AddProperty(const Property & property)
@@ -52,18 +59,40 @@ namespace ROS2
         m_children.push_back(child);
     }
 
+    std::string Fbx::Node::ToString(int nodeDepth) const
+    {
+        std::string str;
+        // Add implementation
+        return str;
+    }
+
     void Fbx::SaveToFile(const std::string & filePath, FileType type)
     {
-        if (type != FileType::Text) {
+        if (type != FileType::Text)
+        {
             std::runtime_error(std::string(__func__) + ": Only text file type is supported!");
         }
+
+        std::ofstream file(filePath);
+        if (!file.is_open())
+        {
+            std::runtime_error(std::string(__func__) + ": Unable to open file: " + filePath);
+        }
+
+        file << GetFbxString();
+        AZ_Printf("Fbx", "Data structure saved to file: %s", filePath.c_str());
     }
 
     std::string Fbx::GetFbxString() const
     {
         std::string data;
 
-        // TODO: Traverse tree in depth-first order and generate string
+        // Traverse tree in depth-first order and generate string
+        for (const auto & n : basicNodes)
+        {
+            data += n.ToString(0);
+        }
+
         return data;
     }
 
