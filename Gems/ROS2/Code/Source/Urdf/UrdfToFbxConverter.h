@@ -12,6 +12,7 @@
 #include <string>
 
 #include "UrdfParser.h"
+#include "Fbx.h"
 
 namespace ROS2
 {
