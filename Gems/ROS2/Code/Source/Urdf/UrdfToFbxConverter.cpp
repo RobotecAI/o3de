@@ -6,7 +6,7 @@
  *
  */
 
-#include <UrdfParser.h>
+#include "UrdfToFbxConverter.h"
 
 #include <fstream>
 #include <string>
@@ -15,7 +15,7 @@
 
 namespace ROS2
 {
-    std::string UrdfToFbxConverter::ConvertUrdfToFbx(const std::string & urdfString);
+    std::string UrdfToFbxConverter::ConvertUrdfToFbx(const std::string & urdfString)
     {
 
         return "";

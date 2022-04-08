@@ -8,34 +8,57 @@
 
 #pragma once
 
+#include <any>
 #include <string>
 
-#include <UrdfParser.h>
+#include "UrdfParser.h"
 
 namespace ROS2
 {
-    class FbxNode
+    class Fbx
     {
-        FbxNode(std::string nodeName)
-        {
+        public:
+            using Property = std::any;
+            using Properties = std::vector<Property>;
 
-        }
+            class Node
+            {
+                public:
+                    Node(const std::string & name, const Properties & properties = {})
+                        : m_name(name), m_properties(properties)
+                    {}
 
-        void AddProperty(bool value)
-        {
+                    void AddProperty(const Property & property)
+                    {
+                        m_properties.push_back(property);
+                    }
 
-        }
+                    void AddChildNode(const Node & child)
+                    {
+                        m_children.push_back(child);
+                    }
 
-        void AddChild(const FbxNode & child)
-        {
+                    void AddChildNode(const std::string & name, const Property & property)
+                    {
+                        m_children.push_back(Node(name, { property }));
+                    }
 
-        }
+                    void AddChildNode(const Node && child)
+                    {
+                        m_children.push_back(child);
+                    }
+
+                private:
+                    std::string m_name;
+                    std::vector<Node> m_children;
+                    Properties m_properties;
+            };
+
+
 
         private:
-            // Properties/values
-            // Childs
+            std::vector<Node> basicNodes;
     };
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     //! Class for conversion from URDF to Filmbox (.fbx) files
@@ -44,6 +67,7 @@ namespace ROS2
         public:
             std::string ConvertUrdfToFbx(const std::string & urdfString);
 
+        private:
 
     };
 

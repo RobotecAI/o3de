@@ -6,13 +6,13 @@
  *
  */
 
-#include <UrdfParser.h>
+#include <UrdfToFbxConverter.h>
 
 #include <AzTest/AzTest.h>
 
 namespace {
 
-class UrdfParserTest : public ::testing::Test
+class UrdfToFbxConverterTest : public ::testing::Test
 {
     public:
         std::string GetUrdfWithOneLink()
@@ -44,7 +44,7 @@ class UrdfParserTest : public ::testing::Test
         ROS2::UrdfToFbxConverter converter; 
 };
 
-TEST_F(UrdfParserTest, ConvertUrdfWithOneLink)
+TEST_F(UrdfToFbxConverterTest, ConvertUrdfWithOneLink)
 {
     const auto xmlStr = GetUrdfWithOneLink();
     const auto fbxStr = converter.ConvertUrdfToFbx(xmlStr);
