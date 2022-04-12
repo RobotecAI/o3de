@@ -11,6 +11,10 @@ set(FILES
     Source/RobotControl/ROS2RobotControlComponent.h
     Source/RobotControl/TwistControl.cpp
     Source/RobotControl/TwistControl.h
+    Source/Sensor/ROS2SensorComponent.cpp
+    Source/Sensor/ROS2SensorComponent.h
+    Source/Sensor/SensorConfiguration.cpp
+    Source/Sensor/SensorConfiguration.h
     Source/ROS2ModuleInterface.h
     Source/ROS2SystemComponent.cpp
     Source/ROS2SystemComponent.h
