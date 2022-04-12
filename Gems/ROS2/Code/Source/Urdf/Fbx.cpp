@@ -61,13 +61,54 @@ namespace ROS2
 
     std::string Fbx::Node::ToString(int nodeDepth) const
     {
-        std::string str;
-        // Add implementation
-        return str;
+        std::stringstream ss;
+        std::string offset;
+        for (int i = 0; i < nodeDepth; ++i)
+            offset += "  ";
+
+        ss << offset << m_name << " p" << m_properties.size() << ": ";
+
+        const bool hasProperties = m_properties.size() > 0;
+        if (hasProperties)
+        {
+            // bool hasPrevious = false;
+            // for(const auto & property : m_properties)
+            // {
+            //     if(hasPrevious)
+            //     {
+            //         ss << ", ";
+            //     }
+
+            //     // TODO: add correct any casting
+            //     // ss << ...
+            //     hasPrevious = true;
+            // }
+        }
+
+        if (HasChildren())
+        {
+            ss << "{\n";
+
+            if(m_children.size() > 0)
+            {
+                for(auto node : m_children)
+                {
+                    ss << node.ToString(nodeDepth + 1);
+                }
+            }
+            ss << offset + "}\n";
+        }
+        else
+        {
+            ss << "\n";
+        }
+
+        return ss.str();
     }
 
     void Fbx::SaveToFile(const std::string & filePath, FileType type)
     {
+        // TODO: add support for binary files
         if (type != FileType::Text)
         {
             std::runtime_error(std::string(__func__) + ": Only text file type is supported!");
@@ -86,7 +127,6 @@ namespace ROS2
     std::string Fbx::GetFbxString() const
     {
         std::string data;
-
         // Traverse tree in depth-first order and generate string
         for (const auto & n : basicNodes)
         {
