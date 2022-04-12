@@ -122,7 +122,6 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
             NAME ROS2.Tests ${PAL_TRAIT_TEST_TARGET_TYPE}
             NAMESPACE Gem
             FILES_CMAKE
-                ros2_files.cmake
                 ros2_tests_files.cmake
             INCLUDE_DIRECTORIES
                 PRIVATE
@@ -131,7 +130,6 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
             BUILD_DEPENDENCIES
                 PRIVATE
                     AZ::AzTest
-                    AZ::AzFramework
                     Gem::ROS2.Static
         )
 
