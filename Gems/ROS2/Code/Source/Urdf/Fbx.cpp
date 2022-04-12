@@ -19,6 +19,24 @@ namespace ROS2
     using Property = Fbx::Property;
     using FileType = Fbx::FileType;
 
+    std::string AnyToString(const std::any & a)
+    {
+        if (a.type() == typeid(int))
+        {
+            return std::to_string(std::any_cast<int>(a));
+        }
+        else if (a.type() == typeid(const char*))
+        {
+            return std::string("\"") + std::any_cast<const char*>(a) + std::string("\"");
+        }
+        else if (a.type() == typeid(std::string))
+        {
+            return std::string("\"") + std::any_cast<std::string>(a) + std::string("\"");
+        }
+
+        throw std::runtime_error("Unsupported type!");
+    }
+
     Fbx::Node::Node(const std::string & name, const Properties & properties)
         : m_name(name)
         , m_properties(properties)
@@ -34,9 +52,19 @@ namespace ROS2
         return m_children;
     }
 
+    Fbx::Properties Fbx::Node::GetProperties() const
+    {
+        return m_properties;
+    }
+
     bool Fbx::Node::HasChildren() const
     {
         return !m_children.empty();
+    }
+
+    bool Fbx::Node::HasProperties() const
+    {
+        return !m_properties.empty();
     }
 
     void Node::AddProperty(const Property & property)
@@ -63,31 +91,40 @@ namespace ROS2
     {
         std::stringstream ss;
         std::string offset;
+
+        // Calculate offset
         for (int i = 0; i < nodeDepth; ++i)
             offset += "  ";
 
-        ss << offset << m_name << " p" << m_properties.size() << ": ";
+        // Write name
+        ss << offset << m_name << ": ";
 
-        const bool hasProperties = m_properties.size() > 0;
-        if (hasProperties)
+        if (!HasProperties() && !HasChildren())
         {
-            // bool hasPrevious = false;
-            // for(const auto & property : m_properties)
-            // {
-            //     if(hasPrevious)
-            //     {
-            //         ss << ", ";
-            //     }
-
-            //     // TODO: add correct any casting
-            //     // ss << ...
-            //     hasPrevious = true;
-            // }
+            ss << " {\n";
+            ss << offset + "}\n";
         }
 
+        // Write properties
+        if (HasProperties())
+        {
+            bool hasPrevious = false;
+            for(const auto & property : m_properties)
+            {
+                if(hasPrevious)
+                {
+                    ss << ", ";
+                }
+                (void)property;
+                ss << AnyToString(property);
+                hasPrevious = true;
+            }
+        }
+
+        // Write child nodes
         if (HasChildren())
         {
-            ss << "{\n";
+            ss << " {\n";
 
             if(m_children.size() > 0)
             {

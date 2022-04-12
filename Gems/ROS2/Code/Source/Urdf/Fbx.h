@@ -32,7 +32,9 @@ namespace ROS2
 
                 std::string GetName() const;
                 std::vector<Node> GetChildren() const;
+                Properties GetProperties() const;
                 bool HasChildren() const;
+                bool HasProperties() const;
 
                 void AddProperty(const Property & property);
                 void AddChildNode(const Node & child);
