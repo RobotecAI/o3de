@@ -25,6 +25,14 @@ namespace ROS2
         {
             return std::to_string(std::any_cast<int>(a));
         }
+        else if (a.type() == typeid(unsigned))
+        {
+            return std::to_string(std::any_cast<unsigned>(a));
+        }
+        else if (a.type() == typeid(float))
+        {
+            return std::to_string(std::any_cast<float>(a));
+        }
         else if (a.type() == typeid(const char*))
         {
             return std::string("\"") + std::any_cast<const char*>(a) + std::string("\"");
@@ -102,7 +110,7 @@ namespace ROS2
         if (!HasProperties() && !HasChildren())
         {
             ss << " {\n";
-            ss << offset + "}\n";
+            ss << offset + "}";
         }
 
         // Write properties
@@ -196,6 +204,34 @@ namespace ROS2
         fbxHeader.AddChildNode("Creator", "O3DE URDF->FBX Converter");
         fbxHeader.AddChildNode(GetSceneInfo());
 
+        return fbxHeader;
+    }
+
+    Node Fbx::GetTimeStamp() const
+    {
+        // TODO: get proper time stamp
+        Node timeStamp("CreationTimeStamp");
+        timeStamp.AddChildNode("Version", 1000);
+        timeStamp.AddChildNode("Year", 2022);
+        timeStamp.AddChildNode("Month", 01);
+        timeStamp.AddChildNode("Day", 01);
+        timeStamp.AddChildNode("Hour", 0);
+        timeStamp.AddChildNode("Minute", 0);
+        timeStamp.AddChildNode("Second", 0);
+        timeStamp.AddChildNode("Millisecond", 0);
+
+        return timeStamp;
+    }
+
+    Node Fbx::GetSceneInfo() const
+    {
+        Node sceneInfo("SceneInfo");
+        sceneInfo.AddProperty("SceneInfo::GlobalInfo");
+        sceneInfo.AddProperty("UserData");
+        sceneInfo.AddChildNode("Type", "UserData");
+        sceneInfo.AddChildNode("Version", 100);
+        sceneInfo.AddChildNode(GetMetaData());
+
         Node properties("Properties70");
         properties.AddChildNode(
             Node("P", {"DocumentUrl", "KString", "Url", "", "/dummy_path.fbx"}));
@@ -228,35 +264,7 @@ namespace ROS2
         properties.AddChildNode(
             Node("P", {"Original|ApplicationNativeFile", "KString", "", "", "/dummy_path.fbx"}));
 
-        fbxHeader.AddChildNode(std::move(properties));
-
-        return fbxHeader;
-    }
-
-    Node Fbx::GetTimeStamp() const
-    {
-        // TODO: get proper time stamp
-        Node timeStamp("CreationTimeStamp");
-        timeStamp.AddChildNode("Version", 1000);
-        timeStamp.AddChildNode("Year", 2022);
-        timeStamp.AddChildNode("Month", 01);
-        timeStamp.AddChildNode("Day", 01);
-        timeStamp.AddChildNode("Hour", 0);
-        timeStamp.AddChildNode("Minute", 0);
-        timeStamp.AddChildNode("Second", 0);
-        timeStamp.AddChildNode("Millisecond", 0);
-
-        return timeStamp;
-    }
-
-    Node Fbx::GetSceneInfo() const
-    {
-        Node sceneInfo("SceneInfo");
-        sceneInfo.AddProperty("SceneInfo::GlobalInfo");
-        sceneInfo.AddProperty("UserData");
-        sceneInfo.AddChildNode("Type", "UserData");
-        sceneInfo.AddChildNode("Version", 100);
-        sceneInfo.AddChildNode(GetMetaData());
+        sceneInfo.AddChildNode(std::move(properties));
 
         return sceneInfo;
     }

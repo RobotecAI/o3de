@@ -36,14 +36,17 @@ TEST_F(FbxTest, BasicStructureGeneration)
     std::istringstream iss(fbxStr);
     std::string line;
 
-    // std::getline(iss, line);
-    // EXPECT_EQ(line, "FBXHeaderExtension:  {");
+    std::getline(iss, line);
+    EXPECT_EQ(line, "FBXHeaderExtension:  {");
 
-    // std::getline(iss, line);
-    // EXPECT_EQ(line, "	FBXHeaderVersion: 1003");
+    std::getline(iss, line);
+    EXPECT_EQ(line, "  FBXHeaderVersion: 1003");
 
-    // std::getline(iss, line);
-    // EXPECT_EQ(line, "	FBXVersion: 7500");
+    std::getline(iss, line);
+    EXPECT_EQ(line, "  FBXVersion: 7500");
+
+    std::getline(iss, line);
+    EXPECT_EQ(line, "  CreationTimeStamp:  {");
 }
 
 } // namespace
