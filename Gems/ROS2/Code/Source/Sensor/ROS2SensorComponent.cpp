@@ -10,30 +10,17 @@
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Serialization/SerializeContext.h>
-#include <AzCore/std/smart_ptr/make_unique.h>
 
 namespace ROS2
 {
-    void ROSSensorComponent::Init()
-    {
-    }
-
     void ROS2SensorComponent::Activate()
     {
         AZ::TickBus::Handler::BusConnect();
-
-        if (m_publishTransform)
-        {
-            auto ros2Node = ROS2Interface::Get()->GetNode();
-            m_staticTransformPublisher = AZStd::make_unique<ROS2StaticTransformPublisher>(ros2Node, transform);
-        }
     }
 
     void ROS2SensorComponent::Deactivate()
     {
         AZ::TickBus::Handler::BusDisconnect();
-        m_ros2Sensor.reset();
-        m_transformPublisher.reset();
     }
 
     void ROS2SensorComponent::Reflect(AZ::ReflectContext* context)

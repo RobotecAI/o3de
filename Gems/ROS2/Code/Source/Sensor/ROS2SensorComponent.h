@@ -8,6 +8,8 @@
 #pragma once
 
 #include <AzCore/Component/Component.h>
+#include <AzCore/Component/TickBus.h>
+#include <AzCore/std/smart_ptr/unique_ptr.h>
 #include "SensorConfiguration.h"
 
 namespace ROS2
@@ -19,11 +21,10 @@ namespace ROS2
     {
     public:
         ROS2SensorComponent() = default;
-        virtual void ~ROS2SensorComponent() = default;
+        virtual ~ROS2SensorComponent() = default;
         AZ_COMPONENT(ROS2SensorComponent, "{91BCC1E9-6D93-4466-9CDB-E73D497C6B5E}", AZ::Component);
 
         // AZ::Component interface implementation.
-        void Init() override;
         void Activate() override;
         void Deactivate() override;
 
@@ -40,6 +41,5 @@ namespace ROS2
 
         // TODO - Editor component: validation of fields, constraints between values and so on
         SensorConfiguration m_sensorConfiguration;
-        AZStd::unique_ptr<ROS2StaticTransformPublisher> m_staticTransformPublisher;
     };
 }  // namespace ROS2

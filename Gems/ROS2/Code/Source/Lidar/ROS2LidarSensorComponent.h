@@ -23,16 +23,16 @@ namespace ROS2
     {
     public:
         AZ_COMPONENT(ROS2LidarSensorComponent, "{502A955F-7742-4E23-AD77-5E4063739DCA}", ROS2SensorComponent);
-        ROS2LidarSensorComponent() = default;
-        void ~ROS2LidarSensorComponent() = default;
         static void Reflect(AZ::ReflectContext* context);
         void Activate() override;
         void Deactivate() override;
 
     private:
+        void FrequencyTick() override;
+
         LidarTemplate::LidarModel m_lidarModel = LidarTemplate::SickMRS6000;
         LidarRaycaster m_lidarRaycaster;
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2> m_pointCloudPublisher;
+        std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> m_pointCloudPublisher;
         // TODO - also add a data acquisition implementation choice (and consider propagating abstraction upwards)
     };
 }  // namespace ROS2

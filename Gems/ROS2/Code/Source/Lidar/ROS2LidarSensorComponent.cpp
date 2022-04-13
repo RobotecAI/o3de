@@ -26,7 +26,7 @@ namespace ROS2
 
             if (AZ::EditContext* ec = serialize->GetEditContext())
             {
-                ec->Class<ROS2LidarSensorComponent, ROS2SensorComponent>("Lidar Sensor", "[Simple Lidar component]")
+                ec->Class<ROS2LidarSensorComponent>("Lidar Sensor", "[Simple Lidar component]")
                     ->ClassElement(AZ::Edit::ClassElements::EditorData, "")
                         ->Attribute(AZ::Edit::Attributes::AppearsInAddComponentMenu, AZ_CRC("Simulation"))
                     ->DataElement(AZ::Edit::UIHandlers::Default, &ROS2LidarSensorComponent::m_lidarModel, "Lidar Model", "Lidar model")
@@ -68,7 +68,7 @@ namespace ROS2
         //AZ_TracePrintf("Lidar Sensor Component", "Raycast done, results ready");
 
         auto message = sensor_msgs::msg::PointCloud2();
-        message.header.frame_id = GetConfiguration().GetFrameId().data();
+        message.header.frame_id = GetConfiguration().GetFrameID().data();
         message.header.stamp = ROS2Interface::Get()->GetROSTimestamp();
         message.height = 1;
         message.width = results.size();
