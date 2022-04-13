@@ -22,7 +22,6 @@ namespace ROS2
     {
         AZ::TickBus::Handler::BusConnect();
 
-
         if (m_publishTransform)
         {
             auto ros2Node = ROS2Interface::Get()->GetNode();
@@ -55,7 +54,7 @@ namespace ROS2
 
     void ROS2SensorComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
     {
-        required.push_back(AZ_CRC("TransformService"));
+        required.push_back(AZ_CRC("TransformService")); //TODO - requires ROS2Frame service
     }
 
     void ROSSensorComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)

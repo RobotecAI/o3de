@@ -42,7 +42,7 @@ namespace ROS2
         auto config = GetConfiguration();
 
         // TODO - also use QoS
-        m_pointCloudPublisher = ros2Node->create_publisher<sensor_msgs::msg::PointCloud2>(config.m_publishTopic.data(), 10);
+        m_pointCloudPublisher = ros2Node->create_publisher<sensor_msgs::msg::PointCloud2>(config.GetTopic().data(), 10);
     }
 
     void ROS2LidarSensorComponent::Deactivate()
@@ -68,7 +68,7 @@ namespace ROS2
         //AZ_TracePrintf("Lidar Sensor Component", "Raycast done, results ready");
 
         auto message = sensor_msgs::msg::PointCloud2();
-        message.header.frame_id = m_frameName.data();
+        message.header.frame_id = GetConfiguration().GetFrameId().data();
         message.header.stamp = ROS2Interface::Get()->GetROSTimestamp();
         message.height = 1;
         message.width = results.size();

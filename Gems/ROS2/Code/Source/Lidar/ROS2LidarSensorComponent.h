@@ -7,8 +7,10 @@
  */
 #pragma once
 
+#include <rclcpp/publisher.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include <AzCore/Component/Component.h>
-#include <AzCore/std/smart_ptr/make_unique.h>
 #include <AzFramework/Components/TransformComponent.h>
 
 #include "Sensor/ROS2SensorComponent.h"
@@ -29,7 +31,8 @@ namespace ROS2
 
     private:
         LidarTemplate::LidarModel m_lidarModel = LidarTemplate::SickMRS6000;
-
+        LidarRaycaster m_lidarRaycaster;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2> m_pointCloudPublisher;
         // TODO - also add a data acquisition implementation choice (and consider propagating abstraction upwards)
     };
 }  // namespace ROS2

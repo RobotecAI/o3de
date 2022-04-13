@@ -20,10 +20,6 @@ namespace ROS2
         AZ_RTTI(SensorConfiguration, "{4755363D-0B5A-42D7-BBEF-152D87BA10D7}");
         static void Reflect(AZ::ReflectContext* context);
 
-        // TODO - consider moving to ROS2Frame struct
-        AZStd::string m_namespace; // TODO - option to fill from entity name, default = true, validation
-        AZStd::string m_frameName = "sensor_frame"; // TODO - option to fill from entity name, validation
-
         // TODO - publishing-related data
         AZStd::string m_topic; // TODO - apply namespace, default to standard names per type, validation
         bool m_publishData = true;
@@ -32,12 +28,7 @@ namespace ROS2
 
         bool m_visualise = true;
 
-        // TODO - transform-related data (ROS2Transform needs ROS2Frame, ROS2Publisher also needs ROS2Frame)
-        bool m_publishTransform = true;
-        AZStd::string m_parentFrameName = "base_link"; // TODO - option to fill from parent entity, default = false, validation
-
-        AZStd::string GetFrameID() const;
-        AZStd::string GetPublishTopic() const;
-    }
+        AZStd::string GetTopic() const;
+    };
 }  // namespace ROS2
 

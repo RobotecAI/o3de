@@ -8,6 +8,7 @@
 #pragma once
 
 #include <AzCore/Component/Component.h>
+#include "SensorConfiguration.h"
 
 namespace ROS2
 {
@@ -17,6 +18,8 @@ namespace ROS2
         , public AZ::TickBus::Handler // TODO - high resolution tick source?
     {
     public:
+        ROS2SensorComponent() = default;
+        virtual void ~ROS2SensorComponent() = default;
         AZ_COMPONENT(ROS2SensorComponent, "{91BCC1E9-6D93-4466-9CDB-E73D497C6B5E}", AZ::Component);
 
         // AZ::Component interface implementation.
@@ -33,11 +36,10 @@ namespace ROS2
         const SensorConfiguration& GetConfiguration() const;
 
     private:
-        virtual void CreatePipeline() = 0; // Create data acquisition, publishing pipeline
         virtual void FrequencyTick() = 0; // Override to implement sensor behavior
 
+        // TODO - Editor component: validation of fields, constraints between values and so on
         SensorConfiguration m_sensorConfiguration;
-        AZStd::unique_ptr<ROS2SensorBase> m_ros2Sensor;
         AZStd::unique_ptr<ROS2StaticTransformPublisher> m_staticTransformPublisher;
     };
 }  // namespace ROS2

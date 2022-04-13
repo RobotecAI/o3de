@@ -15,15 +15,7 @@ namespace ROS2
 {
     namespace Internal
     {
-        AZStd::string GetNamespacedName(const AZStd::string& ns, const AZStd::string& name)
-        {
-            AZStd::string namespacedName;
-            if (!ns.empty())
-            {
-                namespacedName = ns + "/";
-            }
-            namespacedName += name;
-        }
+
     }
 
     //AZ_CLASS_ALLOCATOR_IMPL(ROS2::SensorConfiguration, AZ::SystemAllocator, 0);
@@ -34,14 +26,10 @@ namespace ROS2
         {
             serializeContext->Class<SensorConfiguration>()
                 ->Version(1)
-                ->Field("Namespace", &SensorConfiguration::m_namespace)
-                ->Field("Frame Name", &SensorConfiguration::m_frameName)
                 ->Field("Topic", &SensorConfiguration::m_topic)
                 ->Field("Publishing Data", &SensorConfiguration::m_publishData)
                 ->Field("Frequency (HZ)", &SensorConfiguration::m_hz)
                 ->Field("Visualise", &SensorConfiguration::m_visualise)
-                ->Field("Publishing Transform", &RigidBodyConfiguration::m_publishTransform)
-                ->Field("Parent Frame Name", &SensorConfiguration::m_parentFrameName)
                 ;
         }
     }
@@ -51,7 +39,7 @@ namespace ROS2
         return Internal::GetNamespacedName(m_namespace, m_frameName);
     }
 
-    AZStd::string SensorConfiguration::GetPublishTopic() const
+    AZStd::string SensorConfiguration::GetTopic() const
     {
         return Internal::GetNamespacedName(m_namespace, m_topic);
     }
