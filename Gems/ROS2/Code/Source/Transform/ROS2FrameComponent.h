@@ -38,7 +38,7 @@ namespace ROS2
         const AZ::Transform& GetFrameTransform() const;
 
     private:
-        const AZ::TransformInterface* GetEntityTransformInterface() const;
+        AZ::TransformInterface* GetEntityTransformInterface() const;
         const ROS2FrameComponent* GetParentROS2FrameComponent() const;
 
         // If parent entity does not exist or does not have a ROS2Frame component, return ros2 default global frame: "world"

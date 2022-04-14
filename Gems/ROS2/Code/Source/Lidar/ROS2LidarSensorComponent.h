@@ -15,6 +15,7 @@
 
 #include "Sensor/ROS2SensorComponent.h"
 #include "Lidar/LidarTemplate.h"
+#include "Lidar/LidarRaycaster.h"
 
 namespace ROS2
 {
