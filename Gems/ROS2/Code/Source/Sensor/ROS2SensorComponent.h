@@ -34,10 +34,16 @@ namespace ROS2
         static void GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required);
 
     protected:
+        // Getters which include namespaces
+        AZStd::string GetFullTopic() const;
+        AZStd::string GetFrameID() const;
+
         const SensorConfiguration& GetConfiguration() const;
 
     private:
-        virtual void FrequencyTick() = 0; // Override to implement sensor behavior
+        AZStd::string GetNamespace() const;
+
+        virtual void FrequencyTick() { }; // Override to implement sensor behavior
 
         // TODO - Editor component: validation of fields, constraints between values and so on
         SensorConfiguration m_sensorConfiguration;

@@ -8,18 +8,10 @@
 
 #pragma once
 
-#include "SensorConfiguration.h"
-//#include <AzCore/Memory/SystemAllocator.h>
+#include "Sensor/SensorConfiguration.h"
 
 namespace ROS2
 {
-    namespace Internal
-    {
-
-    }
-
-    //AZ_CLASS_ALLOCATOR_IMPL(ROS2::SensorConfiguration, AZ::SystemAllocator, 0);
-
     void SensorConfiguration::Reflect(AZ::ReflectContext* context)
     {
         if (auto serializeContext = azrtti_cast<AZ::SerializeContext*>(context))
@@ -32,16 +24,6 @@ namespace ROS2
                 ->Field("Visualise", &SensorConfiguration::m_visualise)
                 ;
         }
-    }
-
-    AZStd::string SensorConfiguration::GetFrameID() const
-    {
-        return Internal::GetNamespacedName(m_namespace, m_frameName);
-    }
-
-    AZStd::string SensorConfiguration::GetTopic() const
-    {
-        return Internal::GetNamespacedName(m_namespace, m_topic);
     }
 }  // namespace ROS2
 

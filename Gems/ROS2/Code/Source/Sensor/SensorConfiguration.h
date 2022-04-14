@@ -6,7 +6,8 @@
 *
 */
 
-//#include <AzCore/Memory/Memory.h>
+#pragma once
+
 #include <AzCore/RTTI/RTTI.h>
 #include <AzCore/Serialization/SerializeContext.h>
 
@@ -16,8 +17,11 @@ namespace ROS2
     struct SensorConfiguration
     {
     public:
-        //AZ_CLASS_ALLOCATOR_DECL;
         AZ_RTTI(SensorConfiguration, "{4755363D-0B5A-42D7-BBEF-152D87BA10D7}");
+
+        SensorConfiguration() = default;
+        virtual ~SensorConfiguration() = default;
+
         static void Reflect(AZ::ReflectContext* context);
 
         // TODO - publishing-related data
@@ -27,8 +31,6 @@ namespace ROS2
         // TODO - add QoS here (struct, mapped to ros2 QoS).
 
         bool m_visualise = true;
-
-        AZStd::string GetTopic() const;
     };
 }  // namespace ROS2
 

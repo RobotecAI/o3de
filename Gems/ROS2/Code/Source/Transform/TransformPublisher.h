@@ -7,7 +7,7 @@
 */
 #pragma once
 
-#include <AzCore/Maht/Transform.h>
+#include <AzCore/Math/Transform.h>
 #include <AzCore/std/string/string.h>
 #include <AzCore/std/smart_ptr/unique_ptr.h>
 #include <tf2_ros/static_transform_broadcaster.h>

@@ -23,7 +23,7 @@ namespace ROS2
         return ros2vector;
     }
 
-    static geometry_msgs::msg::Quaternion ROS2Conversions::ToROS2Quaternion(const AZ::Quaternion& azquaternion)
+    geometry_msgs::msg::Quaternion ROS2Conversions::ToROS2Quaternion(const AZ::Quaternion& azquaternion)
     {
         geometry_msgs::msg::Quaternion ros2Quaternion;
         ros2Quaternion.x = azquaternion.GetX();

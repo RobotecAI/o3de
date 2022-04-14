@@ -5,8 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
+#include "Sensor/ROS2SensorComponent.h"
 #include "ROS2/ROS2Bus.h"
-#include "ROS2SensorComponent.h"
+#include "Utilities/ROS2Names.h"
 
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Serialization/SerializeContext.h>
@@ -39,12 +40,29 @@ namespace ROS2
         return m_sensorConfiguration;
     }
 
-    void ROS2SensorComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
+    AZStd::string ROS2SensorComponent::GetNamespace() const
     {
-        required.push_back(AZ_CRC("TransformService")); //TODO - requires ROS2Frame service
+        // TODO - hold frame?
+        auto ros2Frame = GetEntity()->FindComponent<ROS2FrameComponent>();
+        return ros2Frame->GetNamespace();
+    };
+
+    AZStd::string ROS2SensorComponent::GetFullTopic() const
+    {
+        return ROS2Names::GetNamespacedName(GetNamespace(), m_sensorConfiguration.m_topic);
     }
 
-    void ROSSensorComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)
+    AZStd::string ROS2SensorComponent::GetFrameID() const
+    {
+        return ROS2Names::GetNamespacedName(GetNamespace(), m_sensorConfiguration.m_topic);
+    }
+
+    void ROS2SensorComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
+    {
+        required.push_back(AZ_CRC("ROS2Frame"));
+    }
+
+    void ROS2SensorComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)
     {
         auto hz = m_sensorConfiguration.m_hz;
 

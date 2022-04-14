@@ -5,7 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
-#include "ROS2LidarSensorComponent.h"
+
+#include "Lidar/ROS2LidarSensorComponent.h"
+#include "Transform/ROS2FrameComponent.h"
 #include "ROS2/ROS2Bus.h"
 
 #include <AzCore/Component/Entity.h>
@@ -42,7 +44,7 @@ namespace ROS2
         auto config = GetConfiguration();
 
         // TODO - also use QoS
-        m_pointCloudPublisher = ros2Node->create_publisher<sensor_msgs::msg::PointCloud2>(config.GetTopic().data(), 10);
+        m_pointCloudPublisher = ros2Node->create_publisher<sensor_msgs::msg::PointCloud2>(GetFullTopic().data(), 10);
     }
 
     void ROS2LidarSensorComponent::Deactivate()
@@ -55,7 +57,7 @@ namespace ROS2
     {
         float distance = LidarTemplateUtils::GetTemplate(m_lidarModel).m_maxRange;
         const auto directions = LidarTemplateUtils::PopulateRayDirections(m_lidarModel);
-        auto entityTransform = GetEntity()->FindComponent<AzFramework::TransformComponent>();
+        auto entityTransform = GetEntity()->FindComponent<AzFramework::TransformComponent>(); // TODO - go through ROS2Frame
         AZ::Vector3 start = entityTransform->GetWorldTM().GetTranslation();
         start.SetZ(start.GetZ() + 1.0f);
         AZStd::vector<AZ::Vector3> results = m_lidarRaycaster.PerformRaycast(start, directions, distance);
@@ -67,8 +69,9 @@ namespace ROS2
         }
         //AZ_TracePrintf("Lidar Sensor Component", "Raycast done, results ready");
 
+        auto ros2Frame = GetEntity()->FindComponent<ROS2FrameComponent>();
         auto message = sensor_msgs::msg::PointCloud2();
-        message.header.frame_id = GetConfiguration().GetFrameID().data();
+        message.header.frame_id = ros2Frame->GetFrameID().data();
         message.header.stamp = ROS2Interface::Get()->GetROSTimestamp();
         message.height = 1;
         message.width = results.size();

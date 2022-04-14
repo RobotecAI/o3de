@@ -22,23 +22,24 @@ namespace ROS2
     public:
         AZ_COMPONENT(ROS2SensorComponent, "{EE743472-3E25-41EA-961B-14096AC1D66F}", AZ::Component);
 
-        // AZ::Component interface implementation.
         void Activate() override;
         void Deactivate() override;
 
-        // Required Reflect function.
         static void Reflect(AZ::ReflectContext* context);
-
-        // TODO - exclude multiple ROS2Frames in entity on single level, expose interface
+        static void GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided);
+        static void GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible);
         static void GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required);
 
         // namespaced and validated, ready to send in ros2 messages (TODO-validate)
         AZStd::string GetFrameID() const;
+        AZStd::string GetNamespace() const;
+
+        // Transform for direct parent if parent ROS2Frame is found, otherwise transformation is global ("world")
+        const AZ::Transform& GetFrameTransform() const;
 
     private:
-        // Transform for direct parent if parent ROS2Frame is found, otherwise transformation is global ("world")
-        const AZ::Transform& m_frameTransform;
-        const AZ::TransformInterface* m_transformInterface;
+        const AZ::TransformInterface* GetEntityTransformInterface() const;
+        const ROS2FrameComponent* GetParentROS2FrameComponent() const;
 
         // If parent entity does not exist or does not have a ROS2Frame component, return ros2 default global frame: "world"
         AZStd::string GetParentFrameID() const;

@@ -12,33 +12,11 @@
 
 namespace ROS2
 {
-    namespace Internal
-    {
-        ROS2FrameComponent* GetParentROS2FrameComponent(const AZ::TransformInterface* transformInterface)
-        {
-            if (const AZ::TransformInterface* parentEntity = transformInterface->GetParent())
-            {
-                return parentEntity->FindComponent<ROS2FrameComponent>())
-            }
-            return nullptr;
-        }
-
-        const AZ::Transform& GetParentFrameTransform(const AZ::TransformInterface* transformInterface) const
-        {
-            if (Internal::GetParentROS2FrameComponent(transformInterface))
-            {   // it is used as "HasParentROS2FrameComponent(..)"
-                return transformInterface->GetLocalTM();
-            }
-            return transformInterface->GetWorldTM();
-        }
-    }
-
     void ROS2FrameComponent::Activate()
     {
-        m_transformInterface = GetEntity()->FindComponent<AzFramework::TransformComponent>();
-        m_frameTransform = GetParentFrameTransform(m_transformInterface);
-
-        m_staticTFPublisher = AZStd::make_unique<TransformPublisher>(GetParentFrameID(), GetFrameID(), m_frameTransform);
+        const AZ::TransformInterface* transformInterface = GetEntity()->FindComponent<AzFramework::TransformComponent>();
+        m_staticTFPublisher = AZStd::make_unique<TransformPublisher>(GetParentFrameID(), GetFrameID(),
+                                                                     GetParentFrameTransform(transformInterface));
     }
 
     void ROS2FrameComponent::Deactivate()
@@ -46,10 +24,33 @@ namespace ROS2
         m_staticTFPublisher.reset();
     }
 
+    const ROS2FrameComponent* GetParentROS2FrameComponent()
+    {
+        if (const AZ::TransformInterface* parentEntity = GetEntityTransformInterface()->GetParent())
+        {
+            return parentEntity->FindComponent<ROS2FrameComponent>())
+        }
+        return nullptr;
+    }
+
+    const ROS2FrameComponent::AZ::Transform& GetFrameTransform() const
+    {
+        if (GetParentROS2FrameComponent() != nullptr)
+        {
+            return transformInterface->GetLocalTM();
+        }
+        return transformInterface->GetWorldTM();
+    }
+
+    const AZ::TransformInterface* GetEntityTransformInterface() const
+    {
+        return GetEntity()->FindComponent<AzFramework::TransformComponent>();
+    }
+
     AZStd::string ROS2FrameComponent::GetParentFrameID()
     {
         AZStd::string parentID = "world";
-        if (auto parentFrame = Internal::GetParentROS2FrameComponent(GetTransformInterface()); parentFrame != nullptr)
+        if (auto parentFrame = GetParentROS2FrameComponent(); parentFrame != nullptr)
         {
             return parentFrame->GetFrameID();
         }
@@ -58,6 +59,11 @@ namespace ROS2
     AZStd::string ROS2FrameComponent::GetFrameID()
     {
         return ROS2Names::GetNamespacedName(m_namespace, m_frameName);
+    }
+
+    AZStd::string ROS2FrameComponent::GetNamespace() const
+    {
+        return m_namespace;
     }
 
     void ROS2FrameComponent::Reflect(AZ::ReflectContext* context)
@@ -70,6 +76,16 @@ namespace ROS2
                 ->Field("Frame Name", &ROS2FrameComponent::m_frameName)
                 ;
         }
+    }
+
+    void ROS2SystemComponent::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided)
+    {
+        provided.push_back(AZ_CRC_CE("ROS2Frame"));
+    }
+
+    void ROS2SystemComponent::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible)
+    {
+        incompatible.push_back(AZ_CRC_CE("ROS2Frame"));
     }
 
     void ROS2FrameComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
