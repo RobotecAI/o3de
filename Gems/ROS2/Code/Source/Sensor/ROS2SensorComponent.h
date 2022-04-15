@@ -35,7 +35,7 @@ namespace ROS2
 
     protected:
         // Getters which include namespaces
-        AZStd::string GetFullTopic() const;
+        AZStd::string GetFullTopic() const; // TODO - support multiple topics per sensor
         AZStd::string GetFrameID() const;
 
         const SensorConfiguration& GetConfiguration() const;

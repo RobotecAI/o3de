@@ -54,7 +54,8 @@ namespace ROS2
 
     AZStd::string ROS2SensorComponent::GetFrameID() const
     {
-        return ROS2Names::GetNamespacedName(GetNamespace(), m_sensorConfiguration.m_topic);
+        auto ros2Frame = GetEntity()->FindComponent<ROS2FrameComponent>();
+        return ros2Frame->GetFrameID();
     }
 
     void ROS2SensorComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required)
@@ -64,10 +65,10 @@ namespace ROS2
 
     void ROS2SensorComponent::OnTick([[maybe_unused]] float deltaTime, [[maybe_unused]] AZ::ScriptTimePoint time)
     {
-        auto hz = m_sensorConfiguration.m_hz;
+        auto frequency = m_sensorConfiguration.m_frequency;
 
         // TODO - add range validation (Attributes?)
-        auto frameTime = hz == 0 ? 1 : 1 / hz;
+        auto frameTime = frequency == 0 ? 1 : 1 / frequency;
 
         static float elapsed = 0;
         elapsed += deltaTime;

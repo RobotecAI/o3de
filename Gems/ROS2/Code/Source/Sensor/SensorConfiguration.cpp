@@ -19,8 +19,8 @@ namespace ROS2
             serializeContext->Class<SensorConfiguration>()
                 ->Version(1)
                 ->Field("Topic", &SensorConfiguration::m_topic)
-                ->Field("Publishing Data", &SensorConfiguration::m_publishData)
-                ->Field("Frequency (HZ)", &SensorConfiguration::m_hz)
+                ->Field("Publishing Enabled", &SensorConfiguration::m_publishingEnabled)
+                ->Field("Frequency (HZ)", &SensorConfiguration::m_frequency)
                 ->Field("Visualise", &SensorConfiguration::m_visualise)
                 ;
         }

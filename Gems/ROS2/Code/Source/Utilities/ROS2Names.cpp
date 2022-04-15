@@ -12,12 +12,11 @@ namespace ROS2
 {
     AZStd::string ROS2Names::GetNamespacedName(const AZStd::string& ns, const AZStd::string& name)
     {
-        AZStd::string namespacedName;
-        if (!ns.empty())
+        if (ns.empty())
         {
-            namespacedName = ns + "/";
+            return name;
+
         }
-        namespacedName += name;
-        return namespacedName;
+        return AZStd::string::format("%s/%s", ns.c_str(), name.c_str());;
     }
 }  // namespace ROS2

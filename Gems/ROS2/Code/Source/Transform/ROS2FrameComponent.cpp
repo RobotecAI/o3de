@@ -55,7 +55,7 @@ namespace ROS2
         {
             return parentFrame->GetFrameID();
         }
-        return "world";
+        return "world"; // TODO - parametrize this, sometimes it is "world" and sometimes "map"
     }
 
     AZStd::string ROS2FrameComponent::GetFrameID() const
