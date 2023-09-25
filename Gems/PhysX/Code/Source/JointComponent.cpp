@@ -85,7 +85,6 @@ namespace PhysX
 
     void JointComponent::Activate()
     {
-        AZ_TracePrintf("JointComponent", "Joint activating");
         if (!m_configuration.m_followerEntity.IsValid())
         {
             return;
@@ -110,7 +109,6 @@ namespace PhysX
             m_rigidBodyEntityMap.insert({ m_configuration.m_leadEntity, false });
         }
 
-        AZ_TracePrintf("JointComponent", "Setting up callbacks");
         // Connect to RigidBodyNotificationBus of follower and leader rigid bodies
         // and wait until all of them are enabled to create the native joint.
         Physics::RigidBodyNotificationBus::MultiHandler::BusConnect(m_configuration.m_followerEntity);
