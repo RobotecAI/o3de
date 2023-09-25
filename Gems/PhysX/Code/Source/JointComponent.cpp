@@ -7,23 +7,21 @@
  */
 #include <Source/JointComponent.h>
 
-#include <Source/Utils.h>
+#include <AzCore/Component/ComponentApplicationBus.h>
+#include <AzCore/Interface/Interface.h>
+#include <AzCore/Serialization/SerializeContext.h>
+#include <AzFramework/Physics/Common/PhysicsSimulatedBody.h>
+#include <AzFramework/Physics/Components/SimulatedBodyComponentBus.h>
+#include <AzFramework/Physics/PhysicsSystem.h>
 #include <PhysX/MathConversion.h>
 #include <PhysX/NativeTypeIdentifiers.h>
 #include <PhysX/PhysXLocks.h>
-#include <AzCore/Interface/Interface.h>
-#include <AzCore/Component/ComponentApplicationBus.h>
-#include <AzCore/Serialization/SerializeContext.h>
-#include <AzFramework/Physics/Common/PhysicsSimulatedBody.h>
-#include <AzFramework/Physics/PhysicsSystem.h>
-#include <AzFramework/Physics/Components/SimulatedBodyComponentBus.h>
+#include <Source/Utils.h>
 
 namespace PhysX
 {
     JointComponentConfiguration::JointComponentConfiguration(
-        AZ::Transform localTransformFromFollower,
-        AZ::EntityId leadEntity,
-        AZ::EntityId followerEntity)
+        AZ::Transform localTransformFromFollower, AZ::EntityId leadEntity, AZ::EntityId followerEntity)
         : m_localTransformFromFollower(localTransformFromFollower)
         , m_leadEntity(leadEntity)
         , m_followerEntity(followerEntity)
@@ -38,8 +36,7 @@ namespace PhysX
                 ->Version(2)
                 ->Field("Follower Local Transform", &JointComponentConfiguration::m_localTransformFromFollower)
                 ->Field("Lead Entity", &JointComponentConfiguration::m_leadEntity)
-                ->Field("Follower Entity", &JointComponentConfiguration::m_followerEntity)
-                ;
+                ->Field("Follower Entity", &JointComponentConfiguration::m_followerEntity);
         }
     }
 
@@ -54,14 +51,11 @@ namespace PhysX
                 ->Field("Joint Configuration", &JointComponent::m_configuration)
                 ->Field("Joint Generic Properties", &JointComponent::m_genericProperties)
                 ->Field("Joint Limits", &JointComponent::m_limits)
-                ->Field("Joint Motor", &JointComponent::m_motor )
-                ;
+                ->Field("Joint Motor", &JointComponent::m_motor);
         }
     }
 
-    JointComponent::JointComponent(
-        const JointComponentConfiguration& configuration,
-        const JointGenericProperties& genericProperties)
+    JointComponent::JointComponent(const JointComponentConfiguration& configuration, const JointGenericProperties& genericProperties)
         : m_configuration(configuration)
         , m_genericProperties(genericProperties)
     {
@@ -91,6 +85,7 @@ namespace PhysX
 
     void JointComponent::Activate()
     {
+        AZ_TracePrintf("JointComponent", "Joint activating");
         if (!m_configuration.m_followerEntity.IsValid())
         {
             return;
@@ -115,6 +110,7 @@ namespace PhysX
             m_rigidBodyEntityMap.insert({ m_configuration.m_leadEntity, false });
         }
 
+        AZ_TracePrintf("JointComponent", "Setting up callbacks");
         // Connect to RigidBodyNotificationBus of follower and leader rigid bodies
         // and wait until all of them are enabled to create the native joint.
         Physics::RigidBodyNotificationBus::MultiHandler::BusConnect(m_configuration.m_followerEntity);
@@ -213,9 +209,10 @@ namespace PhysX
         // If the lead exists but it doesn't have a rigid body then this joint will never get
         // created and therefore we need to warn about the invalid joint setup.
 
-        if (!Physics::RigidBodyRequestBus::FindFirstHandler(m_configuration.m_leadEntity))
+        if (!Physics::RigidBodyRequestBus::FindFirstHandler(m_configuration.m_leadEntity) &&
+            !ArticulationJointRequestBus::FindFirstHandler(m_configuration.m_leadEntity))
         {
-            const AZStd::string entityWithoutBodyWarningMsg("Rigid body not found in lead entity associated with joint. "
+            const AZStd::string entityWithoutBodyWarningMsg("Appropriate simulated body not found in lead entity associated with joint. "
                                                             "Joint will not be created.");
             WarnInvalidJointSetup(m_configuration.m_leadEntity, entityWithoutBodyWarningMsg);
         }
@@ -239,8 +236,7 @@ namespace PhysX
         return PxMathConvert(actorRotateInv * actorTranslateInv) * jointPose;
     }
 
-    AZ::Transform JointComponent::GetJointTransform(AZ::EntityId entityId
-        , const JointComponentConfiguration& jointConfig)
+    AZ::Transform JointComponent::GetJointTransform(AZ::EntityId entityId, const JointComponentConfiguration& jointConfig)
     {
         AZ::Transform jointTransform = PhysX::Utils::GetEntityWorldTransformWithoutScale(entityId);
         jointTransform = jointTransform * jointConfig.m_localTransformFromFollower;
@@ -265,11 +261,12 @@ namespace PhysX
             // In the future only body type validation will be needed
             if (!info.m_leadBody ||
                 !(info.m_leadBody->GetNativeType() == NativeTypeIdentifiers::RigidBody ||
-                 info.m_leadBody->GetNativeType() == NativeTypeIdentifiers::RigidBodyStatic))
+                  info.m_leadBody->GetNativeType() == NativeTypeIdentifiers::RigidBodyStatic ||
+                  info.m_leadBody->GetNativeType() == NativeTypeIdentifiers::ArticulationLink))
             {
                 info.m_leadBody = nullptr;
-                const AZStd::string entityWithoutBodyWarningMsg(
-                    "Simulated body not found in lead entity associated with joint. Joint treated as constraint on global position.");
+                const AZStd::string entityWithoutBodyWarningMsg("Appropriate simulated body not found in lead entity associated with "
+                                                                "joint. Joint treated as constraint on global position.");
                 WarnInvalidJointSetup(m_configuration.m_leadEntity, entityWithoutBodyWarningMsg);
             }
         }
@@ -278,10 +275,13 @@ namespace PhysX
             info.m_followerBody, m_configuration.m_followerEntity, &AzPhysics::SimulatedBodyComponentRequests::GetSimulatedBody);
 
         // The follower body has to be a RigidBody, otherwise it won't be moving anywhere
-        if (!info.m_followerBody || info.m_followerBody->GetNativeType() != NativeTypeIdentifiers::RigidBody)
+        if (!info.m_followerBody ||
+            (info.m_followerBody->GetNativeType() != NativeTypeIdentifiers::RigidBody &&
+             info.m_leadBody->GetNativeType() != NativeTypeIdentifiers::ArticulationLink))
         {
             info.m_followerBody = nullptr;
-            const AZStd::string entityWithoutBodyWarningMsg("Rigid body not found in follower entity associated with joint. Please add a rigid body component to the entity.");
+            const AZStd::string entityWithoutBodyWarningMsg("Appropriate simulated body not found in follower entity associated with "
+                                                            "joint. Please add a rigid body component to the entity.");
             WarnInvalidJointSetup(m_configuration.m_followerEntity, entityWithoutBodyWarningMsg);
             return;
         }
@@ -302,7 +302,7 @@ namespace PhysX
         {
             info.m_leadLocal = jointTransform; // lead is null, attaching follower to global position of joint.
         }
-        info.m_followerLocal = m_configuration.m_localTransformFromFollower;// joint position & orientation in follower actor's frame.
+        info.m_followerLocal = m_configuration.m_localTransformFromFollower; // joint position & orientation in follower actor's frame.
     }
 
     void JointComponent::PrintJointSetupMessage(AZ::EntityId entityId, const AZStd::string& message)

@@ -8,12 +8,13 @@
 
 #pragma once
 
-#include <AzCore/Component/ComponentBus.h>
 #include <AzCore/Component/ComponentApplicationBus.h>
+#include <AzCore/Component/ComponentBus.h>
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Math/Aabb.h>
 #include <AzCore/Math/Vector3.h>
 #include <AzFramework/Physics/Common/PhysicsSceneQueries.h>
+#include <AzFramework/Physics/Components/SimulatedBodyComponentBus.h>
 
 namespace AzPhysics
 {
@@ -23,8 +24,7 @@ namespace AzPhysics
 namespace Physics
 {
     //! Requests interface for a rigid body (static or dynamic).
-    class RigidBodyRequests
-        : public AZ::ComponentBus
+    class RigidBodyRequests : public AZ::ComponentBus
     {
     public:
         using MutexType = AZStd::recursive_mutex;
@@ -82,8 +82,7 @@ namespace Physics
     using RigidBodyRequestBus = AZ::EBus<RigidBodyRequests>;
 
     //! Notifications interface for a rigid body (static or dynamic).
-    class RigidBodyNotifications
-        : public AZ::ComponentBus
+    class RigidBodyNotifications : public AZ::ComponentBus
     {
     private:
         template<class Bus>
@@ -108,11 +107,11 @@ namespace Physics
                     if (entityState == AZ::Entity::State::Active)
                     {
                         // Only immediately dispatch if the entity is a RigidBodyRequestBus' handler.
-                        RigidBodyRequestBus::EnumerateHandlersId(
+                        AzPhysics::SimulatedBodyComponentRequestsBus::EnumerateHandlersId(
                             id,
-                            [&handler, id](const RigidBodyRequests* rigidBodyhandler)
+                            [&handler, id](const AzPhysics::SimulatedBodyComponentRequests* simulatedBodyhandler)
                             {
-                                if (rigidBodyhandler->IsPhysicsEnabled())
+                                if (simulatedBodyhandler->IsPhysicsEnabled())
                                 {
                                     handler->OnPhysicsEnabled(id);
                                 }
@@ -144,4 +143,4 @@ namespace Physics
     };
 
     using RigidBodyNotificationBus = AZ::EBus<RigidBodyNotifications>;
-}
+} // namespace Physics

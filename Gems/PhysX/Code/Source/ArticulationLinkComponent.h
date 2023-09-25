@@ -12,7 +12,6 @@
 #include <AzCore/Component/TransformBus.h>
 #include <AzFramework/Physics/Common/PhysicsEvents.h>
 #include <AzFramework/Physics/Components/SimulatedBodyComponentBus.h>
-#include <AzFramework/Physics/RigidBodyBus.h>
 #include <AzFramework/Physics/Shape.h>
 #include <PhysX/ArticulationJointBus.h>
 #include <PhysX/ArticulationSensorBus.h>
@@ -22,11 +21,13 @@
 #include <Source/Articulation.h>
 #include <Source/Articulation/ArticulationLinkConfiguration.h>
 
+#include <AzFramework/Physics/PhysicsScene.h>
+
 namespace physx
 {
     class PxArticulationReducedCoordinate;
     class PxArticulationJointReducedCoordinate;
-}
+} // namespace physx
 
 namespace PhysX
 {
@@ -37,6 +38,7 @@ namespace PhysX
 #if (PX_PHYSICS_VERSION_MAJOR == 5)
         , public PhysX::ArticulationJointRequestBus::Handler
         , public PhysX::ArticulationSensorRequestBus::Handler
+        , public AzPhysics::SimulatedBodyComponentRequestsBus::Handler
 #endif
     {
     public:
@@ -82,6 +84,16 @@ namespace PhysX
         void SetSensorTransform(AZ::u32 sensorIndex, const AZ::Transform& sensorTransform) override;
         AZ::Vector3 GetForce(AZ::u32 sensorIndex) const override;
         AZ::Vector3 GetTorque(AZ::u32 sensorIndex) const override;
+
+        AzPhysics::SimulatedBody* GetSimulatedBodyConst() const;
+        // SimulatedBodyComponentRequests overrides ...
+        AzPhysics::SimulatedBody* GetSimulatedBody() override;
+        AzPhysics::SimulatedBodyHandle GetSimulatedBodyHandle() const override;
+        void EnablePhysics() override;
+        void DisablePhysics() override;
+        bool IsPhysicsEnabled() const override;
+        AZ::Aabb GetAabb() const override;
+        AzPhysics::SceneQueryHit RayCast(const AzPhysics::RayCastRequest& request) override;
 #endif
         physx::PxArticulationLink* GetArticulationLink(const AZ::EntityId entityId);
         const AZStd::vector<AZ::u32> GetSensorIndices(const AZ::EntityId entityId);

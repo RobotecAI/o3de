@@ -158,12 +158,17 @@ namespace PhysX
 
         ArticulationJointRequestBus::Handler::BusConnect(GetEntityId());
         ArticulationSensorRequestBus::Handler::BusConnect(GetEntityId());
+        AzPhysics::SimulatedBodyComponentRequestsBus::Handler::BusConnect(GetEntityId());
+
+        Physics::RigidBodyNotificationBus::Event(
+            GetEntityId(), &Physics::RigidBodyNotificationBus::Events::OnPhysicsEnabled, GetEntityId());
     }
 
     void ArticulationLinkComponent::Deactivate()
     {
         ArticulationSensorRequestBus::Handler::BusDisconnect();
         ArticulationJointRequestBus::Handler::BusDisconnect();
+        AzPhysics::SimulatedBodyComponentRequestsBus::Handler::BusDisconnect();
 
         if (IsRootArticulation())
         {
@@ -184,6 +189,9 @@ namespace PhysX
 
         // set the behavior when the parent's transform changes back to default, since physics is no longer controlling the transform
         GetEntity()->GetTransform()->SetOnParentChangedBehavior(AZ::OnParentChangedBehavior::Update);
+
+        Physics::RigidBodyNotificationBus::Event(
+            GetEntityId(), &Physics::RigidBodyNotificationBus::Events::OnPhysicsDisabled, GetEntityId());
     }
 #endif
 
@@ -203,7 +211,6 @@ namespace PhysX
 
         physx::PxPhysics* pxPhysics = GetPhysXSystem()->GetPxPhysics();
         m_articulation = pxPhysics->createArticulationReducedCoordinate();
-
 
         const auto& rootLinkConfiguration = m_articulationLinkData->m_articulationLinkConfiguration;
         SetRootSpecificProperties(rootLinkConfiguration);
@@ -226,8 +233,7 @@ namespace PhysX
             if (linkActorData)
             {
                 const auto entityId = linkActorData->GetEntityId();
-                if (auto iterator = m_sensorIndicesByEntityId.find(entityId);
-                    iterator != m_sensorIndicesByEntityId.end())
+                if (auto iterator = m_sensorIndicesByEntityId.find(entityId); iterator != m_sensorIndicesByEntityId.end())
                 {
                     iterator->second.push_back(sensor->getIndex());
                 }
@@ -310,8 +316,8 @@ namespace PhysX
             AZ::Interface<AzPhysics::SceneInterface>::Get()->AddSimulatedBody(m_attachedSceneHandle, &articulationLinkConfiguration);
         if (articulationLinkHandle == AzPhysics::InvalidSimulatedBodyHandle)
         {
-            AZ_Error("PhysX", false, "Failed to create a simulated body for the articulation link at root %s",
-                GetEntity()->GetName().c_str());
+            AZ_Error(
+                "PhysX", false, "Failed to create a simulated body for the articulation link at root %s", GetEntity()->GetName().c_str());
             return;
         }
 
@@ -465,7 +471,6 @@ namespace PhysX
         }
     }
 
-
     void ArticulationLinkComponent::DestroyArticulation()
     {
         AzPhysics::Scene* scene = AZ::Interface<AzPhysics::SceneInterface>::Get()->GetScene(m_attachedSceneHandle);
@@ -475,7 +480,7 @@ namespace PhysX
         physx::PxScene* pxScene = static_cast<physx::PxScene*>(scene->GetNativePointer());
         PHYSX_SCENE_WRITE_LOCK(pxScene);
         m_articulation->release();
-        
+
         m_sensorIndicesByEntityId.clear();
     }
 
@@ -488,7 +493,7 @@ namespace PhysX
             },
             aznumeric_cast<int32_t>(AzPhysics::SceneEvents::PhysicsStartFinishSimulationPriority::Physics));
     }
-    
+
     void ArticulationLinkComponent::PostPhysicsTick([[maybe_unused]] float fixedDeltaTime)
     {
         AzPhysics::Scene* scene = AZ::Interface<AzPhysics::SceneInterface>::Get()->GetScene(m_attachedSceneHandle);
@@ -527,8 +532,7 @@ namespace PhysX
 
     physx::PxArticulationLink* ArticulationLinkComponent::GetArticulationLink(const AZ::EntityId entityId)
     {
-        if (const auto iterator = m_articulationLinksByEntityId.find(entityId);
-            iterator != m_articulationLinksByEntityId.end())
+        if (const auto iterator = m_articulationLinksByEntityId.find(entityId); iterator != m_articulationLinksByEntityId.end())
         {
             return iterator->second;
         }
@@ -540,8 +544,7 @@ namespace PhysX
 
     const AZStd::vector<AZ::u32> ArticulationLinkComponent::GetSensorIndices(const AZ::EntityId entityId)
     {
-        if (const auto iterator = m_sensorIndicesByEntityId.find(entityId);
-            iterator != m_sensorIndicesByEntityId.end())
+        if (const auto iterator = m_sensorIndicesByEntityId.find(entityId); iterator != m_sensorIndicesByEntityId.end())
         {
             return iterator->second;
         }
@@ -777,7 +780,11 @@ namespace PhysX
         if (sensorIndex >= m_sensorIndices.size())
         {
             AZ_ErrorOnce(
-                "Articulation Link Component", false, "Invalid sensor index (%i) for entity %s", sensorIndex, GetEntity()->GetName().c_str());
+                "Articulation Link Component",
+                false,
+                "Invalid sensor index (%i) for entity %s",
+                sensorIndex,
+                GetEntity()->GetName().c_str());
             return nullptr;
         }
 
@@ -845,11 +852,87 @@ namespace PhysX
         }
         return AZ::Vector3::CreateZero();
     }
+
+    AzPhysics::SimulatedBody* ArticulationLinkComponent::GetSimulatedBodyConst() const
+    {
+        const AZ::Entity* rootEntity = GetArticulationRootEntity();
+        auto rootComponent = rootEntity->FindComponent<ArticulationLinkComponent>();
+
+        return AZ::Interface<AzPhysics::SceneInterface>::Get()->GetSimulatedBodyFromHandle(
+            rootComponent->m_attachedSceneHandle, GetSimulatedBodyHandle());
+    }
+
+    AzPhysics::SimulatedBody* ArticulationLinkComponent::GetSimulatedBody()
+    {
+        return GetSimulatedBodyConst();
+    }
+
+    AzPhysics::SimulatedBodyHandle ArticulationLinkComponent::GetSimulatedBodyHandle() const
+    {
+        const AZ::Entity* rootEntity = GetArticulationRootEntity();
+        auto rootComponent = rootEntity->FindComponent<ArticulationLinkComponent>();
+
+        for (auto articulationHandle : rootComponent->GetSimulatedBodyHandles())
+        {
+            auto simulatedBody = AZ::Interface<AzPhysics::SceneInterface>::Get()->GetSimulatedBodyFromHandle(
+                rootComponent->m_attachedSceneHandle, articulationHandle);
+            if (simulatedBody)
+            {
+                if (simulatedBody->GetEntityId() == GetEntityId())
+                {
+                    return articulationHandle;
+                }
+            }
+            else
+            {
+                AZ_Error("ArticulationLinkComponent", false, "Failed to get simulated body from simulated body handle");
+            }
+        }
+
+        AZ_Error("ArticulationLinkComponent", false, "No simulated body handle found");
+        return AzPhysics::InvalidSimulatedBodyHandle;
+    }
+
+    void ArticulationLinkComponent::EnablePhysics()
+    {
+        AZ_Error("ArticulationLinkComponent", false, "Articulation links don't support enabling and disabling physics yet");
+    }
+
+    void ArticulationLinkComponent::DisablePhysics()
+    {
+        AZ_Error("ArticulationLinkComponent", false, "Articulation links don't support enabling and disabling physics yet");
+    }
+
+    bool ArticulationLinkComponent::IsPhysicsEnabled() const
+    {
+        return true;
+    }
+
+    AZ::Aabb ArticulationLinkComponent::GetAabb() const
+    {
+        return GetSimulatedBodyConst()->GetAabb();
+    }
+
+    AzPhysics::SceneQueryHit ArticulationLinkComponent::RayCast(const AzPhysics::RayCastRequest& request)
+    {
+        return GetSimulatedBody()->RayCast(request);
+    }
+
 #else
-    void ArticulationLinkComponent::Activate() {}
-    void ArticulationLinkComponent::Deactivate() {}
-    void ArticulationLinkComponent::CreateArticulation() {}
-    void ArticulationLinkComponent::DestroyArticulation() {}
-    void ArticulationLinkComponent::InitPhysicsTickHandler() {}
+    void ArticulationLinkComponent::Activate()
+    {
+    }
+    void ArticulationLinkComponent::Deactivate()
+    {
+    }
+    void ArticulationLinkComponent::CreateArticulation()
+    {
+    }
+    void ArticulationLinkComponent::DestroyArticulation()
+    {
+    }
+    void ArticulationLinkComponent::InitPhysicsTickHandler()
+    {
+    }
 #endif
 } // namespace PhysX

@@ -10,12 +10,14 @@
 #include <PxPhysicsAPI.h>
 
 #include <AzCore/Component/Component.h>
+#include <AzCore/Component/EntityBus.h>
 #include <AzCore/Component/EntityId.h>
-#include <AzCore/Component/TransformBus.h>
 #include <AzCore/Component/TickBus.h>
-#include <AzFramework/Physics/RigidBodyBus.h>
+#include <AzCore/Component/TransformBus.h>
 #include <AzFramework/Physics/Common/PhysicsTypes.h>
+#include <AzFramework/Physics/RigidBodyBus.h>
 
+#include <PhysX/ArticulationJointBus.h>
 #include <PhysX/Joint/Configuration/PhysXJointConfiguration.h>
 
 namespace AzPhysics
@@ -33,14 +35,12 @@ namespace PhysX
         static void Reflect(AZ::ReflectContext* context);
 
         JointComponentConfiguration() = default;
-        JointComponentConfiguration(
-            AZ::Transform localTransformFromFollower,
-            AZ::EntityId leadEntity,
-            AZ::EntityId followerEntity);
+        JointComponentConfiguration(AZ::Transform localTransformFromFollower, AZ::EntityId leadEntity, AZ::EntityId followerEntity);
 
         AZ::EntityId m_leadEntity; ///< EntityID for entity containing body that is lead to this joint constraint.
         AZ::EntityId m_followerEntity; ///< EntityID for entity containing body that is follower to this joint constraint.
-        AZ::Transform m_localTransformFromFollower; ///< Joint's location and orientation in the frame (coordinate system) of the follower entity.
+        AZ::Transform
+            m_localTransformFromFollower; ///< Joint's location and orientation in the frame (coordinate system) of the follower entity.
     };
 
     /// Base class for game-time generic joint components.
@@ -54,9 +54,7 @@ namespace PhysX
         static void Reflect(AZ::ReflectContext* context);
 
         JointComponent() = default;
-        JointComponent(
-            const JointComponentConfiguration& configuration,
-            const JointGenericProperties& genericProperties);
+        JointComponent(const JointComponentConfiguration& configuration, const JointGenericProperties& genericProperties);
         JointComponent(
             const JointComponentConfiguration& configuration,
             const JointGenericProperties& genericProperties,
@@ -103,11 +101,11 @@ namespace PhysX
 
         AZ::Transform GetJointLocalPose(const physx::PxRigidActor* actor, const AZ::Transform& jointPose);
 
-        AZ::Transform GetJointTransform(AZ::EntityId entityId,
-            const JointComponentConfiguration& jointConfig);
+        AZ::Transform GetJointTransform(AZ::EntityId entityId, const JointComponentConfiguration& jointConfig);
 
         /// Used on initialization by sub-classes to get native pointers from entity IDs.
-        /// This allows sub-classes to instantiate specific native types. This base class does not need knowledge of any specific joint type.
+        /// This allows sub-classes to instantiate specific native types. This base class does not need knowledge of any specific joint
+        /// type.
         void ObtainLeadFollowerInfo(LeadFollowerInfo& leadFollowerInfo);
 
         /// Issues warnings for invalid scenarios when initializing a joint from entity IDs.
