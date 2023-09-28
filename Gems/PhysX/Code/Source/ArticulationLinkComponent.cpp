@@ -156,6 +156,8 @@ namespace PhysX
             }
         }
 
+        FillSimulatedBodyHandle();
+
         ArticulationJointRequestBus::Handler::BusConnect(GetEntityId());
         ArticulationSensorRequestBus::Handler::BusConnect(GetEntityId());
         AzPhysics::SimulatedBodyComponentRequestsBus::Handler::BusConnect(GetEntityId());
@@ -853,7 +855,16 @@ namespace PhysX
         return AZ::Vector3::CreateZero();
     }
 
-    AzPhysics::SimulatedBody* ArticulationLinkComponent::GetSimulatedBodyConst() const
+    const AzPhysics::SimulatedBody* ArticulationLinkComponent::GetSimulatedBodyConst() const
+    {
+        const AZ::Entity* rootEntity = GetArticulationRootEntity();
+        const auto rootComponent = rootEntity->FindComponent<ArticulationLinkComponent>();
+
+        return AZ::Interface<AzPhysics::SceneInterface>::Get()->GetSimulatedBodyFromHandle(
+            rootComponent->m_attachedSceneHandle, GetSimulatedBodyHandle());
+    }
+
+    AzPhysics::SimulatedBody* ArticulationLinkComponent::GetSimulatedBody()
     {
         const AZ::Entity* rootEntity = GetArticulationRootEntity();
         auto rootComponent = rootEntity->FindComponent<ArticulationLinkComponent>();
@@ -862,12 +873,12 @@ namespace PhysX
             rootComponent->m_attachedSceneHandle, GetSimulatedBodyHandle());
     }
 
-    AzPhysics::SimulatedBody* ArticulationLinkComponent::GetSimulatedBody()
+    AzPhysics::SimulatedBodyHandle ArticulationLinkComponent::GetSimulatedBodyHandle() const
     {
-        return GetSimulatedBodyConst();
+        return m_bodyHandle;
     }
 
-    AzPhysics::SimulatedBodyHandle ArticulationLinkComponent::GetSimulatedBodyHandle() const
+    void ArticulationLinkComponent::FillSimulatedBodyHandle()
     {
         const AZ::Entity* rootEntity = GetArticulationRootEntity();
         auto rootComponent = rootEntity->FindComponent<ArticulationLinkComponent>();
@@ -880,7 +891,8 @@ namespace PhysX
             {
                 if (simulatedBody->GetEntityId() == GetEntityId())
                 {
-                    return articulationHandle;
+                    m_bodyHandle = articulationHandle;
+                    return;
                 }
             }
             else
@@ -890,7 +902,6 @@ namespace PhysX
         }
 
         AZ_Error("ArticulationLinkComponent", false, "No simulated body handle found");
-        return AzPhysics::InvalidSimulatedBodyHandle;
     }
 
     void ArticulationLinkComponent::EnablePhysics()

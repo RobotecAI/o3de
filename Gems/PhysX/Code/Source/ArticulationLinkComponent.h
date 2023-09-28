@@ -85,7 +85,8 @@ namespace PhysX
         AZ::Vector3 GetForce(AZ::u32 sensorIndex) const override;
         AZ::Vector3 GetTorque(AZ::u32 sensorIndex) const override;
 
-        AzPhysics::SimulatedBody* GetSimulatedBodyConst() const;
+        const AzPhysics::SimulatedBody* GetSimulatedBodyConst() const;
+        void FillSimulatedBodyHandle();
         // SimulatedBodyComponentRequests overrides ...
         AzPhysics::SimulatedBody* GetSimulatedBody() override;
         AzPhysics::SimulatedBodyHandle GetSimulatedBodyHandle() const override;
@@ -138,6 +139,7 @@ namespace PhysX
 
         AzPhysics::SceneHandle m_attachedSceneHandle = AzPhysics::InvalidSceneHandle;
         AZStd::vector<AzPhysics::SimulatedBodyHandle> m_articulationLinks;
+        AzPhysics::SimulatedBodyHandle m_bodyHandle = AzPhysics::InvalidSimulatedBodyHandle;
         AzPhysics::SceneEvents::OnSceneSimulationFinishHandler m_sceneFinishSimHandler;
 
         using EntityIdArticulationLinkPair = AZStd::pair<AZ::EntityId, physx::PxArticulationLink*>;
