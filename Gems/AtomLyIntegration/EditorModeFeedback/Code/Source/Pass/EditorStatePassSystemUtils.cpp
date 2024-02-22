@@ -6,11 +6,11 @@
  *
  */
 
-#include <Pass/State/EditorStateBufferCopyPassData.h>
-#include <Pass/State/EditorStateBufferCopyPass.h>
-#include <Pass/State/EditorStateParentPassData.h>
 #include <Pass/EditorStatePassSystem.h>
 #include <Pass/EditorStatePassSystemUtils.h>
+#include <Pass/State/EditorStateBufferCopyPass.h>
+#include <Pass/State/EditorStateBufferCopyPassData.h>
+#include <Pass/State/EditorStateParentPassData.h>
 
 #include <Atom/RPI.Reflect/Pass/RasterPassData.h>
 
@@ -30,7 +30,7 @@ namespace AZ::Render
     {
         return Name(state.GetStateName() + "BufferCopyTemplate");
     }
-    
+
     Name GetBufferCopyPassNameForState(const EditorStateBase& state)
     {
         return Name(state.GetStateName() + "BufferCopyPass");
@@ -49,7 +49,7 @@ namespace AZ::Render
         stateParentPassTemplate->m_name = templateName;
         stateParentPassTemplate->m_passClass = StatePassTemplatePassClassName;
 
-         // Input depth slot
+        // Input depth slot
         {
             RPI::PassSlot slot;
             slot.m_name = Name("InputDepth");
@@ -105,7 +105,7 @@ namespace AZ::Render
             RPI::PassRequest pass;
             pass.m_passName = childPassName;
             pass.m_templateName = childPassTemplate;
-            
+
             // Input depth
             {
                 RPI::PassConnection connection;
@@ -113,7 +113,7 @@ namespace AZ::Render
                 connection.m_attachmentRef = { Name("Parent"), Name("InputDepth") };
                 pass.AddInputConnection(connection);
             }
-            
+
             // Input entity mask
             {
                 RPI::PassConnection connection;
@@ -121,7 +121,7 @@ namespace AZ::Render
                 connection.m_attachmentRef = { Name("Parent"), Name("InputEntityMask") };
                 pass.AddInputConnection(connection);
             }
-            
+
             // Input color
             {
                 RPI::PassConnection connection;
@@ -129,7 +129,7 @@ namespace AZ::Render
                 connection.m_attachmentRef = { previousOutput.first, previousOutput.second };
                 pass.AddInputConnection(connection);
             }
-            
+
             stateParentPassTemplate->AddPassRequest(pass);
             previousOutput = { pass.m_passName, Name("OutputColor") };
             passCount++;
@@ -159,7 +159,7 @@ namespace AZ::Render
         auto passTemplate = AZStd::make_shared<RPI::PassTemplate>();
         passTemplate->m_name = templateName;
         passTemplate->m_passClass = BufferCopyStatePassTemplatePassClassName;
-    
+
         // Input color slot
         {
             RPI::PassSlot slot;
@@ -200,7 +200,10 @@ namespace AZ::Render
             const auto shaderFilePath = "shaders/editormodebuffercopy.azshader";
             Data::AssetId shaderAssetId;
             Data::AssetCatalogRequestBus::BroadcastResult(
-                shaderAssetId, &Data::AssetCatalogRequestBus::Events::GetAssetIdByPath, shaderFilePath, azrtti_typeid<RPI::ShaderAsset>(),
+                shaderAssetId,
+                &Data::AssetCatalogRequestBus::Events::GetAssetIdByPath,
+                shaderFilePath,
+                azrtti_typeid<RPI::ShaderAsset>(),
                 false);
             if (!shaderAssetId.IsValid())
             {
@@ -261,7 +264,7 @@ namespace AZ::Render
         imageAttachment.m_name = Name("OutputEntityMaskAttachment");
         imageAttachment.m_sizeSource.m_source.m_pass = Name("This");
         imageAttachment.m_sizeSource.m_source.m_attachment = Name("InputDepth");
-        imageAttachment.m_imageDescriptor.m_format = RHI::Format::R8G8_UNORM;
+        imageAttachment.m_imageDescriptor.m_format = RHI::Format::R8G8B8A8_UNORM;
         imageAttachment.m_imageDescriptor.m_sharedQueueMask = RHI::HardwareQueueClassMask::Graphics;
         maskPassTemplate->AddImageAttachment(imageAttachment);
 
@@ -283,14 +286,12 @@ namespace AZ::Render
         RPI::PassSystemInterface::Get()->AddPassTemplate(maskPassTemplate->m_name, maskPassTemplate);
     }
 
-    AZStd::unordered_set<Name> CreateMaskPassTemplatesFromEditorStates(
-        const EditorStateList& editorStates)
+    AZStd::unordered_set<Name> CreateMaskPassTemplatesFromEditorStates(const EditorStateList& editorStates)
     {
         AZStd::unordered_set<Name> drawLists;
         for (const auto& state : editorStates)
         {
-            if (const auto drawList = state->GetEntityMaskDrawList();
-                !drawLists.contains(drawList))
+            if (const auto drawList = state->GetEntityMaskDrawList(); !drawLists.contains(drawList))
             {
                 CreateAndAddMaskPassTemplate(drawList);
                 drawLists.insert(drawList);

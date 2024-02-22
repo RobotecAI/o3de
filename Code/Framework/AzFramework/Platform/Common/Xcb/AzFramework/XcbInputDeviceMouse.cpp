@@ -31,11 +31,8 @@ namespace AzFramework
         // Get the atom for the _NET_ACTIVE_WINDOW property
         constexpr int propertyNameLength = 18;
         xcb_generic_error_t* error = nullptr;
-        XcbStdFreePtr<xcb_intern_atom_reply_t> activeWindowAtom {xcb_intern_atom_reply(
-            connection,
-            xcb_intern_atom(connection, /*only_if_exists=*/ 1, propertyNameLength, "_NET_ACTIVE_WINDOW"),
-            &error
-        )};
+        XcbStdFreePtr<xcb_intern_atom_reply_t> activeWindowAtom{ xcb_intern_atom_reply(
+            connection, xcb_intern_atom(connection, /*only_if_exists=*/1, propertyNameLength, "_NET_ACTIVE_WINDOW"), &error) };
         if (!activeWindowAtom || error)
         {
             if (error)
@@ -50,19 +47,17 @@ namespace AzFramework
         const xcb_window_t rootWId = xcb_setup_roots_iterator(xcb_get_setup(connection)).data->root;
 
         // Fetch the value of the root window's _NET_ACTIVE_WINDOW property
-        XcbStdFreePtr<xcb_get_property_reply_t> property {xcb_get_property_reply(
+        XcbStdFreePtr<xcb_get_property_reply_t> property{ xcb_get_property_reply(
             connection,
             xcb_get_property(
                 /*c=*/connection,
-                /*_delete=*/ 0,
+                /*_delete=*/0,
                 /*window=*/rootWId,
                 /*property=*/activeWindowAtom->atom,
                 /*type=*/XCB_ATOM_WINDOW,
                 /*long_offset=*/0,
-                /*long_length=*/1
-            ),
-            &error
-        )};
+                /*long_length=*/1),
+            &error) };
 
         if (!property || error)
         {
@@ -200,20 +195,36 @@ namespace AzFramework
             const int16_t offset = 30;
 
             // Create the left barrier info.
-            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection), XCB_XFIXES_BARRIER_DIRECTIONS_POSITIVE_X, x0, Clamp(y0 - offset),
-                                         x0, Clamp(y1 + offset) });
+            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection),
+                                         XCB_XFIXES_BARRIER_DIRECTIONS_POSITIVE_X,
+                                         x0,
+                                         Clamp(y0 - offset),
+                                         x0,
+                                         Clamp(y1 + offset) });
 
             // Create the right barrier info.
-            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection), XCB_XFIXES_BARRIER_DIRECTIONS_NEGATIVE_X, x1, Clamp(y0 - offset),
-                                         x1, Clamp(y1 + offset) });
+            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection),
+                                         XCB_XFIXES_BARRIER_DIRECTIONS_NEGATIVE_X,
+                                         x1,
+                                         Clamp(y0 - offset),
+                                         x1,
+                                         Clamp(y1 + offset) });
 
             // Create the top barrier info.
-            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection), XCB_XFIXES_BARRIER_DIRECTIONS_POSITIVE_Y, Clamp(x0 - offset), y0,
-                                         Clamp(x1 + offset), y0 });
+            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection),
+                                         XCB_XFIXES_BARRIER_DIRECTIONS_POSITIVE_Y,
+                                         Clamp(x0 - offset),
+                                         y0,
+                                         Clamp(x1 + offset),
+                                         y0 });
 
             // Create the bottom barrier info.
-            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection), XCB_XFIXES_BARRIER_DIRECTIONS_NEGATIVE_Y, Clamp(x0 - offset), y1,
-                                         Clamp(x1 + offset), y1 });
+            m_activeBarriers.push_back({ xcb_generate_id(s_xcbConnection),
+                                         XCB_XFIXES_BARRIER_DIRECTIONS_NEGATIVE_Y,
+                                         Clamp(x0 - offset),
+                                         y1,
+                                         Clamp(x1 + offset),
+                                         y1 });
 
             // Create the xfixes barriers.
             for (const auto& barrier : m_activeBarriers)
@@ -223,8 +234,14 @@ namespace AzFramework
                 const XcbStdFreePtr<xcb_generic_error_t> xcbError{ xcb_request_check(s_xcbConnection, cookie) };
 
                 AZ_Warning(
-                    "XcbInput", !xcbError, "XFixes, failed to create barrier %d at (%d %d %d %d)", barrier.id, barrier.x0, barrier.y0,
-                    barrier.x1, barrier.y1);
+                    "XcbInput",
+                    !xcbError,
+                    "XFixes, failed to create barrier %d at (%d %d %d %d)",
+                    barrier.id,
+                    barrier.x0,
+                    barrier.y0,
+                    barrier.x1,
+                    barrier.y1);
             }
         }
         else
@@ -328,6 +345,7 @@ namespace AzFramework
 
     void XcbInputDeviceMouse::HandleCursorState(xcb_window_t window, SystemCursorState systemCursorState)
     {
+        return;
         const bool confined = (systemCursorState == SystemCursorState::ConstrainedAndHidden) ||
             (systemCursorState == SystemCursorState::ConstrainedAndVisible);
         const bool cursorShown = (systemCursorState == SystemCursorState::ConstrainedAndVisible) ||
@@ -504,7 +522,7 @@ namespace AzFramework
                 // In this case, they represent an axis of motion.
 
                 // The valuator mask is a bitset of which axes have changed and have values in this motion event.
-                //  For every bit set in the valuator mask, there will be a corresponding entry in the axis values, 
+                //  For every bit set in the valuator mask, there will be a corresponding entry in the axis values,
                 // and the length of the axis values array will be the number of bits that are set in this valuator mask.
 
                 // For example, x and y movement mouse axis movement will have bits 0x1 (x) or 0x2 (y), or 0x3 if both.
@@ -514,7 +532,7 @@ namespace AzFramework
 
                 // Anything beyond that is a completely different axis, such as the mouse wheel, z axis, other things
                 // special mice can do.
-                uint32_t *mask = xcb_input_raw_button_press_valuator_mask(mouseMotionEvent);
+                uint32_t* mask = xcb_input_raw_button_press_valuator_mask(mouseMotionEvent);
                 if (!mask)
                 {
                     // something is broken with this event - at the very least, it cannot contain mouse movement.
@@ -578,9 +596,9 @@ namespace AzFramework
 
                     m_focusWindow = focusInEvent->event;
 
-                    // If the cursor state is Unknown, then calling HandleCursorState would hide the cursor, 
+                    // If the cursor state is Unknown, then calling HandleCursorState would hide the cursor,
                     // but we should only hide the cursor if m_systemCursorState is explicitly hidden.
-                    if(SystemCursorState::Unknown != m_systemCursorState) 
+                    if (SystemCursorState::Unknown != m_systemCursorState)
                     {
                         HandleCursorState(m_focusWindow, m_systemCursorState);
                     }

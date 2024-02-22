@@ -5,5 +5,23 @@
         {
             "file": "Shaders/EditorModeMask.shader"
         }
-    ]
+    ],
+    "propertyLayout": {
+        "propertyGroups": [
+            {
+                "name": "Entity",
+                "description": "Properties to set for each entity",
+                "properties": [
+                    {
+                        "name": "entityId",
+                        "type": "float",
+                        "connection": {
+                            "type": "ShaderInput",
+                            "name": "m_entityId"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
 }

@@ -15,64 +15,50 @@ namespace AZ::RHI
     enum class Format : uint32_t
     {
         Unknown = 0,
-
         R32G32B32A32_FLOAT,
         R32G32B32A32_UINT,
         R32G32B32A32_SINT,
-
         R32G32B32_FLOAT,
         R32G32B32_UINT,
         R32G32B32_SINT,
-
         R16G16B16A16_FLOAT,
         R16G16B16A16_UNORM,
         R16G16B16A16_UINT,
         R16G16B16A16_SNORM,
         R16G16B16A16_SINT,
-
         R32G32_FLOAT,
         R32G32_UINT,
         R32G32_SINT,
-
         D32_FLOAT_S8X24_UINT,
-
         R10G10B10A2_UNORM,
         R10G10B10A2_UINT,
-
         R11G11B10_FLOAT,
-
         R8G8B8A8_UNORM,
         R8G8B8A8_UNORM_SRGB,
         R8G8B8A8_UINT,
         R8G8B8A8_SNORM,
         R8G8B8A8_SINT,
-
         R16G16_FLOAT,
         R16G16_UNORM,
         R16G16_UINT,
         R16G16_SNORM,
         R16G16_SINT,
-
         D32_FLOAT,
         R32_FLOAT,
         R32_UINT,
         R32_SINT,
-
         D24_UNORM_S8_UINT,
-
         R8G8_UNORM,
         R8G8_UNORM_SRGB,
         R8G8_UINT,
         R8G8_SNORM,
         R8G8_SINT,
-
         R16_FLOAT,
         D16_UNORM,
         R16_UNORM,
         R16_UINT,
         R16_SNORM,
         R16_SINT,
-
         R8_UNORM,
         R8_UNORM_SRGB,
         R8_UINT,
@@ -194,16 +180,16 @@ namespace AZ::RHI
     enum class FormatCapabilities : uint32_t
     {
         None = 0,
-        VertexBuffer = AZ_BIT(0),   // The format can be used to create a vertex buffer.
-        IndexBuffer = AZ_BIT(1),    // The format can be used to create an index buffer.
-        RenderTarget = AZ_BIT(2),   // The format can be used to create a rendertarget image.
-        DepthStencil = AZ_BIT(3),   // The format can be used to create a depth/stencil image.
-        Blend = AZ_BIT(4),          // The format can be used to create a rendertarget image that supports blending operations.
-        Sample = AZ_BIT(5),         // The format can be used to create an image that supports being sample from a shader.
-        TypedLoadBuffer = AZ_BIT(6),// The format can be used to create a buffer that supports typed load operations.  
-        TypedStoreBuffer = AZ_BIT(7),   // The format can be used to create a buffer that supports typed store operations.  
-        AtomicBuffer = AZ_BIT(8),   // The format can be used to create a buffer that supports atomic operations.
-        ShadingRate = AZ_BIT(9),    // The format can be used to create a shading rate image.
+        VertexBuffer = AZ_BIT(0), // The format can be used to create a vertex buffer.
+        IndexBuffer = AZ_BIT(1), // The format can be used to create an index buffer.
+        RenderTarget = AZ_BIT(2), // The format can be used to create a rendertarget image.
+        DepthStencil = AZ_BIT(3), // The format can be used to create a depth/stencil image.
+        Blend = AZ_BIT(4), // The format can be used to create a rendertarget image that supports blending operations.
+        Sample = AZ_BIT(5), // The format can be used to create an image that supports being sample from a shader.
+        TypedLoadBuffer = AZ_BIT(6), // The format can be used to create a buffer that supports typed load operations.
+        TypedStoreBuffer = AZ_BIT(7), // The format can be used to create a buffer that supports typed store operations.
+        AtomicBuffer = AZ_BIT(8), // The format can be used to create a buffer that supports atomic operations.
+        ShadingRate = AZ_BIT(9), // The format can be used to create a shading rate image.
     };
 
     AZ_DEFINE_ENUM_BITWISE_OPERATORS(AZ::RHI::FormatCapabilities);
@@ -213,7 +199,7 @@ namespace AZ::RHI
     //! and it do the number of bytes in a pixel otherwise.
     uint32_t GetFormatSize(Format format);
 
-    //! @brief Returns the number of elements represented by the provided format. For example, R32G32B32_FLOAT returns 3, 
+    //! @brief Returns the number of elements represented by the provided format. For example, R32G32B32_FLOAT returns 3,
     //!        and R32G32_UINT returns 2. This function is intended primarily for validation of vertex input stream formats.
     uint32_t GetFormatComponentCount(Format format);
 
@@ -237,4 +223,4 @@ namespace AZ::RHI
     ImageAspectFlags GetImageAspectFlags(Format format);
 
     AZ_TYPE_INFO_SPECIALIZE(Format, "{92CC7BFB-4F2B-45F9-A951-B4EBBCD485B8}");
-}
+} // namespace AZ::RHI
