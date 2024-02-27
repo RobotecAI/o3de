@@ -37,9 +37,7 @@ namespace AZ
         {
             if (auto* serializeContext = azrtti_cast<SerializeContext*>(context))
             {
-                serializeContext
-                    ->Class<EditorModeFeatureProcessor, RPI::FeatureProcessor>()
-                    ->Version(1);
+                serializeContext->Class<EditorModeFeatureProcessor, RPI::FeatureProcessor>()->Version(1);
             }
         }
 
@@ -61,16 +59,16 @@ namespace AZ
             DisableSceneNotification();
         }
 
-        void EditorModeFeatureProcessor::OnRenderPipelineChanged(RPI::RenderPipeline* renderPipeline,
-            RPI::SceneNotification::RenderPipelineChangeType changeType)
+        void EditorModeFeatureProcessor::OnRenderPipelineChanged(
+            RPI::RenderPipeline* renderPipeline, RPI::SceneNotification::RenderPipelineChangeType changeType)
         {
             if (!m_editorStatePassSystem)
             {
                 return;
             }
 
-            if (changeType == RPI::SceneNotification::RenderPipelineChangeType::Added
-                || changeType == RPI::SceneNotification::RenderPipelineChangeType::PassChanged)
+            if (changeType == RPI::SceneNotification::RenderPipelineChangeType::Added ||
+                changeType == RPI::SceneNotification::RenderPipelineChangeType::PassChanged)
             {
                 m_editorStatePassSystem->ConfigureStatePassesForPipeline(renderPipeline);
             }
@@ -89,7 +87,7 @@ namespace AZ
 
             m_editorStatePassSystem->AddPassesToRenderPipeline(renderPipeline);
 
-            if(!m_maskRenderers.empty())
+            if (!m_maskRenderers.empty())
             {
                 return;
             }
@@ -97,8 +95,7 @@ namespace AZ
             for (const auto& mask : m_editorStatePassSystem->GetMasks())
             {
                 // Emplaces the mask key and mask renderer value in place for the mask renderers map
-                m_maskRenderers.emplace(
-                    AZStd::piecewise_construct, AZStd::forward_as_tuple(mask), AZStd::forward_as_tuple(mask));
+                m_maskRenderers.emplace(AZStd::piecewise_construct, AZStd::forward_as_tuple(mask), AZStd::forward_as_tuple(mask));
             }
         }
 
@@ -109,14 +106,26 @@ namespace AZ
                 return;
             }
 
-            const auto entityMaskMap = m_editorStatePassSystem->GetEntitiesForEditorStates();
-            for (const auto& [mask, entities] : entityMaskMap)
-            {
-                if(auto it = m_maskRenderers.find(mask);
-                    it != m_maskRenderers.end())
+            AZStd::string name = "Pool";
+            AZStd::unordered_set<AZ::EntityId> entityIds;
+            AZ::ComponentApplicationBus::Broadcast(
+                &AZ::ComponentApplicationRequests::EnumerateEntities,
+                [&entityIds, name](AZ::Entity* entity)
                 {
-                    it->second.RenderMaskEntities(m_maskMaterial, entities);
-                } 
+                    if (AZ::StringFunc::Contains(entity->GetName(), name))
+                    {
+                        entityIds.insert(entity->GetId());
+                    }
+                });
+
+            const auto entityMaskMap = m_editorStatePassSystem->GetEntitiesForEditorStates();
+            if (!entityMaskMap.empty())
+            {
+                const auto sampleMask = entityMaskMap.begin()->first;
+                if (auto it = m_maskRenderers.find(sampleMask); it != m_maskRenderers.end())
+                {
+                    it->second.RenderMaskEntities(m_maskMaterial, entityIds);
+                }
             }
         }
 
@@ -145,7 +154,8 @@ namespace AZ
         }
 
         void EditorModeFeatureProcessor::SetEnableRender(bool enableRender)
-        {            
+        {
+            enableRender = true;
             if (!m_editorStatePassSystem)
             {
                 return;
@@ -154,7 +164,9 @@ namespace AZ
             const auto templateName = Name(m_editorStatePassSystem->GetParentPassTemplateName());
 
             auto passFilter = AZ::RPI::PassFilter::CreateWithTemplateName(templateName, GetParentScene());
-            AZ::RPI::PassSystemInterface::Get()->ForEachPass(passFilter,  [enableRender](RPI::Pass* pass) -> RPI::PassFilterExecutionFlow
+            AZ::RPI::PassSystemInterface::Get()->ForEachPass(
+                passFilter,
+                [enableRender](RPI::Pass* pass) -> RPI::PassFilterExecutionFlow
                 {
                     pass->SetEnabled(enableRender);
                     return RPI::PassFilterExecutionFlow::ContinueVisitingPasses;
