@@ -14,6 +14,7 @@
 #include <Atom/RPI.Public/RenderPipeline.h>
 #include <Atom/RPI.Reflect/Asset/AssetUtils.h>
 #include <Atom/Utils/Utils.h>
+#include <AtomLyIntegration/CommonFeatures/Mesh/MeshComponentBus.h>
 
 namespace AZ
 {
@@ -112,7 +113,10 @@ namespace AZ
                 &AZ::ComponentApplicationRequests::EnumerateEntities,
                 [&entityIds, name](AZ::Entity* entity)
                 {
-                    if (AZ::StringFunc::Contains(entity->GetName(), name))
+                    bool meshVisible = false;
+                    AZ::Render::MeshComponentRequestBus::EventResult(
+                        meshVisible, entity->GetId(), &AZ::Render::MeshComponentRequests::GetVisibility);
+                    if (meshVisible && AZ::StringFunc::Contains(entity->GetName(), name))
                     {
                         entityIds.insert(entity->GetId());
                     }
