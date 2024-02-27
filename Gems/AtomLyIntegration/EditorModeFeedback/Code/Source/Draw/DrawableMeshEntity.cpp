@@ -6,11 +6,12 @@
  *
  */
 
+#include "Atom/RPI.Edit/Material/MaterialPropertyId.h"
 #include <Draw/DrawableMeshEntity.h>
 
+#include <Atom/RPI.Public/DynamicDraw/DynamicDrawInterface.h>
 #include <Atom/RPI.Public/Model/Model.h>
 #include <Atom/RPI.Public/Model/ModelLodUtils.h>
-#include <Atom/RPI.Public/DynamicDraw/DynamicDrawInterface.h>
 #include <Atom/RPI.Public/Scene.h>
 #include <Atom/RPI.Public/Shader/ShaderResourceGroup.h>
 #include <Atom/RPI.Public/ViewportContext.h>
@@ -118,8 +119,7 @@ namespace AZ::Render
             return;
         }
 
-        if (const auto modelLodIndex = GetModelLodIndex(drawabaleMetaData.GetView(), model);
-            m_modelLodIndex != modelLodIndex)
+        if (const auto modelLodIndex = GetModelLodIndex(drawabaleMetaData.GetView(), model); m_modelLodIndex != modelLodIndex)
         {
             CreateOrUpdateMeshDrawPackets(drawabaleMetaData.GetFeatureProcessor(), modelLodIndex, model);
         }
@@ -128,8 +128,7 @@ namespace AZ::Render
         for (auto& drawPacket : m_meshDrawPackets)
         {
             drawPacket.Update(*drawabaleMetaData.GetScene());
-            if (auto* rhiDrawPacket = drawPacket.GetRHIDrawPacket();
-                rhiDrawPacket != nullptr)
+            if (auto* rhiDrawPacket = drawPacket.GetRHIDrawPacket(); rhiDrawPacket != nullptr)
             {
                 dynamicDraw->AddDrawPacket(drawabaleMetaData.GetScene(), rhiDrawPacket);
             }
