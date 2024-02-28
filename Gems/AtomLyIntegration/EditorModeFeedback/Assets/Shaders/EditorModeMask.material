@@ -1,7 +1,4 @@
 {
     "materialType": "EditorModeMask.materialtype",
-    "materialTypeVersion": 1,
-    "propertyValues": {
-        "Entity.entityId": 0.0
-    }
+    "materialTypeVersion": 1
 }

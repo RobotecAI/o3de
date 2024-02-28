@@ -173,7 +173,7 @@ namespace AZ
             // preview location info
             // defaults to left bottom corner
             AZ::Vector2 m_position = AZ::Vector2(0, 0);
-            AZ::Vector2 m_size = AZ::Vector2(1.0f, 1.0f);
+            AZ::Vector2 m_size = AZ::Vector2(0.5f, 0.5f);
             bool m_keepAspectRatio = true;
         };
     } // namespace RPI

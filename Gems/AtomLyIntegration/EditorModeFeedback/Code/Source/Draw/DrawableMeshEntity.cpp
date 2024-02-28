@@ -200,7 +200,26 @@ namespace AZ::Render
         // Set the object id so the correct MVP matrices can be selected in the shader
         const auto objectId = featureProcessor->GetObjectId(*m_meshHandle).GetIndex();
         RHI::ShaderInputNameIndex objectIdIndex = "m_objectId";
+        RHI::ShaderInputNameIndex paintColorIdIndex = "m_paintColorId";
         maskMeshObjectSrg->SetConstant(objectIdIndex, objectId);
+
+        uint32_t meshColorId = 0;
+        AZ::Entity* entity = nullptr;
+        AZ::ComponentApplicationBus::BroadcastResult(entity, &AZ::ComponentApplicationBus::Events::FindEntity, m_entityId);
+        if (AZ::StringFunc::Contains(entity->GetName(), "Pool_Sick3"))
+        {
+            meshColorId = 1;
+        }
+        else if (AZ::StringFunc::Contains(entity->GetName(), "Pool_Sick2"))
+        {
+            meshColorId = 2;
+        }
+        else if (AZ::StringFunc::Contains(entity->GetName(), "Pool_Sick"))
+        {
+            meshColorId = 3;
+        }
+        maskMeshObjectSrg->SetConstant(paintColorIdIndex, meshColorId);
+
         maskMeshObjectSrg->Compile();
 
         return maskMeshObjectSrg;
