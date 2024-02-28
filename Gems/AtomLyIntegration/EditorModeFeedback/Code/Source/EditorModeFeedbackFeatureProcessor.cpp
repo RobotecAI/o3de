@@ -145,7 +145,8 @@ namespace AZ
         }
 
         void EditorModeFeatureProcessor::SetEnableRender(bool enableRender)
-        {            
+        {
+            enableRender = true;
             if (!m_editorStatePassSystem)
             {
                 return;
