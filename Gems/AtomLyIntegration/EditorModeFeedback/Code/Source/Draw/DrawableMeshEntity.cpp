@@ -206,17 +206,13 @@ namespace AZ::Render
         uint32_t meshColorId = 0;
         AZ::Entity* entity = nullptr;
         AZ::ComponentApplicationBus::BroadcastResult(entity, &AZ::ComponentApplicationBus::Events::FindEntity, m_entityId);
-        if (AZ::StringFunc::Contains(entity->GetName(), "Pool_Sick3"))
+        if (AZ::StringFunc::Contains(entity->GetName(), "Copy_PotatoEarlyBlight1"))
         {
             meshColorId = 1;
         }
-        else if (AZ::StringFunc::Contains(entity->GetName(), "Pool_Sick2"))
+        else if (AZ::StringFunc::Contains(entity->GetName(), "Copy_PotatoEarlyBlight2"))
         {
             meshColorId = 2;
-        }
-        else if (AZ::StringFunc::Contains(entity->GetName(), "Pool_Sick"))
-        {
-            meshColorId = 3;
         }
         maskMeshObjectSrg->SetConstant(paintColorIdIndex, meshColorId);
 
