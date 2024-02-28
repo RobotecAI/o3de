@@ -15,17 +15,13 @@ ShaderResourceGroup ObjectSrg : SRG_PerObject
 {
     //! Id of this draw object for retrieval of transformation matrices.
     uint m_objectId;
+    uint m_diseaseLevel;
 
     //! Returns the matrix for transforming points from Object Space to World Space.
     float4x4 GetWorldMatrix()
     {
         return SceneSrg::GetObjectToWorldMatrix(m_objectId);
     }
-}
-
-ShaderResourceGroup MaterialSrg : SRG_PerMaterial
-{
-    float m_entityId;
 }
 
 ShaderResourceGroup PassSrg : SRG_PerPass
@@ -112,11 +108,30 @@ PixelOutput MainPS(VSOutput IN)
     if((linearDepth - existingLinearDepth) <= 0.0001)
     {
         // Depth test passed, update the mask with this closest value
-        OUT.m_mask.r = MaterialSrg::m_entityId;
-        float objectId = ObjectSrg::m_objectId;
-        OUT.m_mask.r = abs(cos(objectId * 1.0));
-        OUT.m_mask.g = abs(cos(objectId * 2.0));
-        OUT.m_mask.b = abs(cos(objectId * 3.0));
+        if (ObjectSrg::m_diseaseLevel == 0)
+        {
+            OUT.m_mask.r = 1.0;
+        }
+        else if (ObjectSrg::m_diseaseLevel == 1)
+        {
+            OUT.m_mask.g = 1.0;
+        }
+        else if (ObjectSrg::m_diseaseLevel == 2)
+        {
+            OUT.m_mask.b = 1.0;
+        }
+        else if (ObjectSrg::m_diseaseLevel == 3)
+        {
+            OUT.m_mask.r = 1.0;
+            OUT.m_mask.g = 1.0;
+        }
+        else 
+        {
+            float objectId = float(ObjectSrg::m_objectId);
+            OUT.m_mask.r = abs(cos(objectId) * 1.0);
+            OUT.m_mask.g = abs(cos(objectId) * 2.0);
+            OUT.m_mask.b = abs(cos(objectId) * 3.0);
+        }
     }
 
     return OUT;

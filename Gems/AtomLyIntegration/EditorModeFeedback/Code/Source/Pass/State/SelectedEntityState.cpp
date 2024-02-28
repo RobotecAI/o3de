@@ -6,12 +6,14 @@
  *
  */
 
-#include <Pass/State/SelectedEntityState.h>
+#include "API/ToolsApplicationAPI.h"
+#include "AzCore/Component/ComponentApplicationBus.h"
 #include <Pass/Child/EditorModeOutlinePass.h>
+#include <Pass/State/SelectedEntityState.h>
 
 #include <AzToolsFramework/Entity/EditorEntityHelpers.h>
-#include <AzToolsFramework/Viewport/ViewportMessages.h>
 #include <AzToolsFramework/Entity/EditorEntityInfoBus.h>
+#include <AzToolsFramework/Viewport/ViewportMessages.h>
 
 namespace AZ::Render
 {
@@ -31,10 +33,8 @@ namespace AZ::Render
     // Helper function to construct the pass descriptor list for this editor state effect.
     static PassNameList CreateSelectedEntityChildPasses()
     {
-        return PassNameList
-        {
-            // Outline effect for the entities in the selected entity mask
-            AZ::Name("EditorModeOutlineTemplate")
+        return PassNameList{ // Outline effect for the entities in the selected entity mask
+                             AZ::Name("EditorModeOutlineTemplate")
         };
     }
 
@@ -47,10 +47,10 @@ namespace AZ::Render
     {
         // Note: this is an example of how the state passes configure their child passes to tailor the effects in response to
         // settigns menus etc. Right now they can't be set here as the temporary CVARS are hogging the pass configuration
-        //auto* entityOutlinePass =
+        // auto* entityOutlinePass =
         //    FindChildPass<EditorModeOutlinePass>(parentPass, static_cast<std::size_t>(SelectedEntityChildPass::EntityOutlinePass));
         //
-        //if (entityOutlinePass)
+        // if (entityOutlinePass)
         //{
         //    entityOutlinePass->SetLineColor(AZ::Color::CreateFromRgba(0, 0, 255, 255));
         //}
@@ -58,36 +58,43 @@ namespace AZ::Render
 
     AzToolsFramework::EntityIdList SelectedEntityState::GetMaskedEntities() const
     {
-        AzToolsFramework::EntityIdList initialSelectedEntityList, selectedEntityList;
-        AzToolsFramework::ToolsApplicationRequestBus::BroadcastResult(
-            initialSelectedEntityList, &AzToolsFramework::ToolsApplicationRequests::GetSelectedEntities);
-
-        // Drill down any entity hierarchies to select all children of the currently selected entities 
-        for (const auto& selectedEntityId : initialSelectedEntityList)
-        {
-            AZStd::queue<AZ::EntityId> entityIdQueue;
-            entityIdQueue.push(selectedEntityId);
-
-            while (!entityIdQueue.empty())
+        AzToolsFramework::EntityIdList selectedEntityList;
+        AZ::ComponentApplicationBus::Broadcast(
+            &AZ::ComponentApplicationBus::Events::EnumerateEntities,
+            [&selectedEntityList](const AZ::Entity* entity)
             {
-                AZ::EntityId entityId = entityIdQueue.front();
-                entityIdQueue.pop();
+                selectedEntityList.push_back(entity->GetId());
+            });
 
-                if (entityId.IsValid())
-                {
-                    selectedEntityList.push_back(entityId);
-                }
-
-                AzToolsFramework::EntityIdList children;
-                AzToolsFramework::EditorEntityInfoRequestBus::EventResult(
-                    children, entityId, &AzToolsFramework::EditorEntityInfoRequestBus::Events::GetChildren);
-
-                for (AZ::EntityId childEntityId : children)
-                {
-                    entityIdQueue.push(childEntityId);
-                }
-            }
-        }
+        // AzToolsFramework::ToolsApplicationRequestBus::BroadcastResult(
+        //     initialSelectedEntityList, &AzToolsFramework::ToolsApplicationRequests::GetSelectedEntities);
+        //
+        // // Drill down any entity hierarchies to select all children of the currently selected entities
+        // for (const auto& selectedEntityId : initialSelectedEntityList)
+        // {
+        //     AZStd::queue<AZ::EntityId> entityIdQueue;
+        //     entityIdQueue.push(selectedEntityId);
+        //
+        //     while (!entityIdQueue.empty())
+        //     {
+        //         AZ::EntityId entityId = entityIdQueue.front();
+        //         entityIdQueue.pop();
+        //
+        //         if (entityId.IsValid())
+        //         {
+        //             selectedEntityList.push_back(entityId);
+        //         }
+        //
+        //         AzToolsFramework::EntityIdList children;
+        //         AzToolsFramework::EditorEntityInfoRequestBus::EventResult(
+        //             children, entityId, &AzToolsFramework::EditorEntityInfoRequestBus::Events::GetChildren);
+        //
+        //         for (AZ::EntityId childEntityId : children)
+        //         {
+        //             entityIdQueue.push(childEntityId);
+        //         }
+        //     }
+        // }
 
         return selectedEntityList;
     }

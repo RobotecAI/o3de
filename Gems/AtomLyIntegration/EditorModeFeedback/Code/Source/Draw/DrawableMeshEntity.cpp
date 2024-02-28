@@ -200,7 +200,12 @@ namespace AZ::Render
         // Set the object id so the correct MVP matrices can be selected in the shader
         const auto objectId = featureProcessor->GetObjectId(*m_meshHandle).GetIndex();
         RHI::ShaderInputNameIndex objectIdIndex = "m_objectId";
+        RHI::ShaderInputNameIndex diseaseLevelIndex = "m_diseaseLevel";
+
         maskMeshObjectSrg->SetConstant(objectIdIndex, objectId);
+        uint32_t diseaseLevel = 1; // Can be dependant on m_entityId
+        maskMeshObjectSrg->SetConstant(diseaseLevelIndex, diseaseLevel);
+
         maskMeshObjectSrg->Compile();
 
         return maskMeshObjectSrg;
