@@ -107,7 +107,7 @@ namespace AZ
                 return;
             }
 
-            AZStd::string name = "Pool";
+            AZStd::string name = "Copy_";
             AZStd::unordered_set<AZ::EntityId> entityIds;
             AZ::ComponentApplicationBus::Broadcast(
                 &AZ::ComponentApplicationRequests::EnumerateEntities,
