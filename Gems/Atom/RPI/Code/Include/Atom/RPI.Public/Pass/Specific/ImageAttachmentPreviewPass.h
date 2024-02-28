@@ -26,10 +26,10 @@ namespace AZ
         class RenderPass;
 
         //! A scope producer to copy the input attachment and output a copy of this attachment
-        class ImageAttachmentCopy final
-            : public RHI::ScopeProducer
+        class ImageAttachmentCopy final : public RHI::ScopeProducer
         {
             friend class ImageAttachmentPreviewPass;
+
         public:
             AZ_RTTI(ImageAttachmentCopy, "{27E35230-48D1-4950-8489-F301A45D4A0B}", RHI::ScopeProducer);
             AZ_CLASS_ALLOCATOR(ImageAttachmentCopy, SystemAllocator);
@@ -77,7 +77,7 @@ namespace AZ
             static Ptr<ImageAttachmentPreviewPass> Create(const PassDescriptor& descriptor);
 
             ~ImageAttachmentPreviewPass();
-            
+
             //! Preview the PassAttachment of a pass' PassAttachmentBinding
             void PreviewImageAttachmentForPass(Pass* pass, const PassAttachment* passAttachment);
 
@@ -120,8 +120,8 @@ namespace AZ
             // Image types. This is matching the option defined in ImageAttachmentsPreview.azsl
             enum class ImageType : uint32_t
             {
-                Image2d = 0,        // Regular 2d image
-                Image2dMs,          // 2d image with multisampler
+                Image2d = 0, // Regular 2d image
+                Image2dMs, // 2d image with multisampler
 
                 ImageTypeCount,
                 Unsupported = ImageTypeCount
@@ -141,15 +141,15 @@ namespace AZ
 
                 uint32_t m_imageCount = 0;
             };
-            
+
             // image attachment to be rendered for preview
             RHI::AttachmentId m_imageAttachmentId;
 
             // render target for the preview
             RHI::Ptr<PassAttachment> m_outputColorAttachment;
-            
+
             RHI::ShaderInputConstantIndex m_colorRangeMinMaxInput;
-            float m_attachmentColorTranformRange[2] = {0.0f, 1.0f};
+            float m_attachmentColorTranformRange[2] = { 0.0f, 1.0f };
 
             // shader for render images to the output
             Data::Instance<Shader> m_shader;
@@ -157,12 +157,12 @@ namespace AZ
             // The shader resource group for this pass
             Data::Instance<ShaderResourceGroup> m_passSrg;
             bool m_passSrgChanged = false;
-                        
+
             AZStd::array<ImageTypePreviewInfo, static_cast<uint32_t>(ImageType::ImageTypeCount)> m_imageTypePreviewInfo;
 
             // whether to update the draw data for both srg data and draw item
             bool m_updateDrawData = false;
-            
+
             bool m_needsShaderLoad = true;
 
             RHI::Viewport m_viewport;
@@ -172,9 +172,9 @@ namespace AZ
 
             // preview location info
             // defaults to left bottom corner
-            AZ::Vector2 m_position = AZ::Vector2(0, 0.6f);
-            AZ::Vector2 m_size = AZ::Vector2(0.4f, 0.4f);
+            AZ::Vector2 m_position = AZ::Vector2(0, 0);
+            AZ::Vector2 m_size = AZ::Vector2(1.0f, 1.0f);
             bool m_keepAspectRatio = true;
         };
-    }   // namespace RPI
-}   // namespace AZ
+    } // namespace RPI
+} // namespace AZ
