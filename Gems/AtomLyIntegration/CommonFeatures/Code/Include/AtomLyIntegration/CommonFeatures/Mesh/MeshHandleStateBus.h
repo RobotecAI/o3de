@@ -8,17 +8,16 @@
 
 #pragma once
 
-#include <AzCore/EBus/EBus.h>
-#include <AzCore/Component/EntityId.h>
 #include <Atom/Feature/Mesh/MeshFeatureProcessorInterface.h>
+#include <AzCore/Component/EntityId.h>
+#include <AzCore/EBus/EBus.h>
 
 namespace AZ
 {
     namespace Render
     {
         //! Bus for retrieving data about a given entity's mesh handle state.
-        class MeshHandleStateRequests
-        : public AZ::EBusTraits
+        class MeshHandleStateRequests : public AZ::EBusTraits
         {
         public:
             static const AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Multiple;
@@ -30,23 +29,22 @@ namespace AZ
         };
 
         using MeshHandleStateRequestBus = EBus<MeshHandleStateRequests>;
-        
+
         //! Bus for receiving notifications about a given entity's mesh handle state.
-        class MeshHandleStateNotifications
-        : public AZ::EBusTraits
+        class MeshHandleStateNotifications : public AZ::EBusTraits
         {
         public:
             static const AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Multiple;
             static const EBusAddressPolicy AddressPolicy = EBusAddressPolicy::ById;
             using BusIdType = EntityId;
+            using MutexType = AZStd::mutex;
 
             //! Notification for when the mesh handle has been set (and thus ready for use).
             virtual void OnMeshHandleSet(const MeshFeatureProcessorInterface::MeshHandle* meshHandle) = 0;
 
             //! When connecting to this bus, if the handle is ready you will immediately get an OnMeshHandleAcquire notification.
             template<class Bus>
-            struct ConnectionPolicy
-                : public AZ::EBusConnectionPolicy<Bus>
+            struct ConnectionPolicy : public AZ::EBusConnectionPolicy<Bus>
             {
                 static void Connect(
                     typename Bus::BusPtr& busPtr,
@@ -58,7 +56,7 @@ namespace AZ
                     AZ::EBusConnectionPolicy<Bus>::Connect(busPtr, context, handler, connectLock, id);
 
                     // If this entity has no MeshHandleStateRequests handler treat this call as a no-op.
-                    if(!MeshHandleStateRequestBus::HasHandlers(id))
+                    if (!MeshHandleStateRequestBus::HasHandlers(id))
                     {
                         return;
                     }
@@ -76,4 +74,4 @@ namespace AZ
 
         using MeshHandleStateNotificationBus = EBus<MeshHandleStateNotifications>;
     } // namespace Render
-} // namespace Render
+} // namespace AZ
