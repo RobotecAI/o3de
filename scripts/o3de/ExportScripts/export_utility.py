@@ -25,10 +25,9 @@ def process_level_names(ctx, seedfile_paths, level_names, platform):
     seedfile_set = set(seedfile_paths)
     for level in level_names:
         new_level_path = ctx.project_path / f'Cache/{platform}/levels' / level.lower() / (level.lower() + ".spawnable")
-        if new_level_path.is_file():
-            seedfile_set.add(new_level_path)
+        # do not check if such file exists since the asset might not be processed yet
+        seedfile_set.add(new_level_path)
     
-    seedfile_paths.clear()
     seedfile_paths.extend([file for  file in seedfile_set])
 
   
