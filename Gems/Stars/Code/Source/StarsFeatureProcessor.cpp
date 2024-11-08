@@ -59,19 +59,27 @@ namespace AZ::Render
         m_rotationIndex.Reset();
 
         auto viewportContextInterface = AZ::Interface<AZ::RPI::ViewportContextRequestsInterface>::Get();
-        auto viewportContext = viewportContextInterface->GetViewportContextByScene(GetParentScene());
-        m_viewportSize = viewportContext->GetViewportSize();
+        if (viewportContextInterface) 
+        {
+            auto viewportContext = viewportContextInterface->GetViewportContextByScene(GetParentScene());
+            if (viewportContext) 
+            {
+                m_viewportSize = viewportContext->GetViewportSize();
+                RPI::ViewportContextIdNotificationBus::Handler::BusConnect(viewportContext->GetId());
+            }
+        }
 
         EnableSceneNotification();
-
-        RPI::ViewportContextIdNotificationBus::Handler::BusConnect(viewportContext->GetId());
     }
 
     void StarsFeatureProcessor::Deactivate()
     {
         Data::AssetBus::Handler::BusDisconnect(m_shader->GetAssetId());
 
-        RPI::ViewportContextIdNotificationBus::Handler::BusDisconnect();
+        if (RPI::ViewportContextIdNotificationBus::Handler::BusIsConnected()) 
+        {
+            RPI::ViewportContextIdNotificationBus::Handler::BusDisconnect();
+        }
 
         DisableSceneNotification();
 
