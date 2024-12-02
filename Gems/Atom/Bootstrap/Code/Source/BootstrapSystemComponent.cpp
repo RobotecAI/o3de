@@ -441,10 +441,10 @@ namespace AZ
                 if (m_windowHandle)
                 {
                     CreateViewportContext();
-                    if (m_createDefaultScene)
-                    {
-                        CreateDefaultRenderPipeline();
-                    }
+                }
+                if (m_createDefaultScene)
+                {
+                    CreateDefaultRenderPipeline();
                 }
             }
 
@@ -596,9 +596,23 @@ namespace AZ
                         }
                     }
 
-                    RPI::RenderPipelinePtr renderPipeline = LoadPipeline(scene, viewportContext, pipelineName, AZ::RPI::ViewType::Default, multisampleState);
-                    if (!renderPipeline)
-                    {
+                    const AzFramework::ViewportId viewportId = viewportContext ? viewportContext->GetId() : AzFramework::InvalidViewportId;
+                    // As part of our initialization we need to create the BRDF texture generation pipeline
+                    AZ::RPI::RenderPipelineDescriptor pipelineDesc;
+                    pipelineDesc.m_mainViewTagName = "MainCamera";
+                    pipelineDesc.m_name = AZStd::string::format("BRDFTexturePipeline_%i", viewportId);
+                    pipelineDesc.m_rootPassTemplate = "BRDFTexturePipeline";
+                    pipelineDesc.m_executeOnce = true;
+
+                    RPI::RenderPipelinePtr renderPipeline = nullptr;
+                    if (viewportContext) {
+                        renderPipeline = LoadPipeline(scene, viewportContext, pipelineName, AZ::RPI::ViewType::Default,
+                                                      multisampleState);
+                    } else {
+                        renderPipeline = AZ::RPI::RenderPipeline::CreateRenderPipeline(pipelineDesc);
+                    }
+                    AZ_Assert(renderPipeline, "No BRDF pipeline");
+                    if (!renderPipeline) {
                         return false;
                     }
 
@@ -608,12 +622,6 @@ namespace AZ
                         renderPipeline->SetActiveAAMethod(antiAliasing.c_str());
                     }
 
-                    // As part of our initialization we need to create the BRDF texture generation pipeline
-                    AZ::RPI::RenderPipelineDescriptor pipelineDesc;
-                    pipelineDesc.m_mainViewTagName = "MainCamera";
-                    pipelineDesc.m_name = AZStd::string::format("BRDFTexturePipeline_%i", viewportContext->GetId());
-                    pipelineDesc.m_rootPassTemplate = "BRDFTexturePipeline";
-                    pipelineDesc.m_executeOnce = true;
 
                     // Save a reference to the generated BRDF texture so it doesn't get deleted if all the passes refering to it get deleted
                     // and it's ref count goes to zero
@@ -783,7 +791,10 @@ namespace AZ
             void BootstrapSystemComponent::CreateDefaultRenderPipeline()
             {
                 EnsureDefaultRenderPipelineInstalledForScene(m_defaultScene, m_viewportContext);
-
+                if (!m_viewportContext)
+                {
+                    return;
+                }
                 const auto pipeline = m_defaultScene->FindRenderPipelineForWindow(m_viewportContext->GetWindowHandle());
                 if (pipeline)
                 {
