@@ -220,19 +220,22 @@ namespace PhysX
 #endif
         deltaTime = AZ::GetClamp(deltaTime, 0.0f, m_systemConfig.m_maxTimestep);
 
-        AZ_Assert(m_systemConfig.m_fixedTimestep >= 0.0f, "PhysXSystem - fixed timestep is negitive.");
-        float tickTime = deltaTime;
-        if (m_systemConfig.m_fixedTimestep > 0.0f) //use the fixed timestep
+        const float adjustedDeltaTime = deltaTime * m_systemConfig.m_realTimeFactor;
+        const float adjustedFixedTimeStep = m_systemConfig.m_fixedTimestep * m_systemConfig.m_realTimeFactor;
+        AZ_Assert(adjustedFixedTimeStep>= 0.0f, "PhysXSystem - fixed timestep is negitive.");
+
+        float tickTime = adjustedDeltaTime;
+        if (adjustedFixedTimeStep> 0.0f) //use the fixed timestep
         {
             m_accumulatedTime += tickTime;
             //divide accumulated time by the fixed step and floor it to get the number of steps that would occur. Then multiply by fixedTimeStep to get the total executed time.
-            tickTime = AZStd::floorf(m_accumulatedTime / m_systemConfig.m_fixedTimestep) * m_systemConfig.m_fixedTimestep;
+            tickTime = AZStd::floorf(m_accumulatedTime /adjustedFixedTimeStep) * adjustedFixedTimeStep;
             m_preSimulateEvent.Signal(tickTime);
 
-            while (m_accumulatedTime >= m_systemConfig.m_fixedTimestep)
+            while (m_accumulatedTime >= adjustedFixedTimeStep)
             {
-                simulateScenes(m_systemConfig.m_fixedTimestep);
-                m_accumulatedTime -= m_systemConfig.m_fixedTimestep;
+                simulateScenes(adjustedFixedTimeStep);
+                m_accumulatedTime -= adjustedFixedTimeStep;
             }
         }
         else

@@ -50,7 +50,7 @@ namespace PhysX
         static PhysXSystemConfiguration CreateDefault();
 
         WindConfiguration m_windConfiguration; //!< Wind configuration for PhysX.
-
+        float m_realTimeFactor = 1.0f; //!< Real time factor for PhysX simulation.
         bool operator==(const PhysXSystemConfiguration& other) const;
         bool operator!=(const PhysXSystemConfiguration& other) const;
     };

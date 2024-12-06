@@ -92,6 +92,7 @@ namespace PhysX
             serializeContext->Class<PhysX::PhysXSystemConfiguration, AzPhysics::SystemConfiguration>()
                 ->Version(2, &PhysXInternal::PhysXSystemConfigurationConverter)
                 ->Field("WindConfiguration", &PhysXSystemConfiguration::m_windConfiguration)
+                ->Field("RealTimeFactor", &PhysXSystemConfiguration::m_realTimeFactor)
                 ;
 
             if (AZ::EditContext* editContext = serializeContext->GetEditContext())
@@ -100,6 +101,9 @@ namespace PhysX
                 editContext->Class<PhysX::PhysXSystemConfiguration>("System Configuration", "PhysX system configuration")
                     ->ClassElement(AZ::Edit::ClassElements::EditorData, "")
                         ->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+                    ->DataElement(AZ::Edit::UIHandlers::Default, &PhysXSystemConfiguration::m_realTimeFactor
+                        , "Real Time Factor"
+                        , "Real time factor for PhysX simulation.")
                     ;
             }
         }
@@ -115,7 +119,8 @@ namespace PhysX
     bool PhysXSystemConfiguration::operator==(const PhysXSystemConfiguration& other) const
     {
         return AzPhysics::SystemConfiguration::operator==(other) &&
-            m_windConfiguration == other.m_windConfiguration
+            m_windConfiguration == other.m_windConfiguration &&
+            m_realTimeFactor == other.m_realTimeFactor
             ;
     }
 
