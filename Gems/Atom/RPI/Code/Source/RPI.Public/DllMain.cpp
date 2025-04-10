@@ -6,13 +6,14 @@
  *
  */
 
-#if !defined(AZ_MONOLITHIC_BUILD)
+
 
 #include <Atom/RPI.Public/SceneBus.h>
 #include <Atom/RPI.Public/Shader/ShaderReloadNotificationBus.h>
 #include <AzCore/PlatformDef.h>
 #include <AzCore/Serialization/SerializeContext.h>
 
+#if !defined(AZ_MONOLITHIC_BUILD)
 extern "C" AZ_DLL_EXPORT void CleanUpRpiPublicGenericClassInfo()
 {
     AZ::GetCurrentSerializeContextModule().Cleanup();
@@ -20,5 +21,5 @@ extern "C" AZ_DLL_EXPORT void CleanUpRpiPublicGenericClassInfo()
 
 #endif
 
-DECLARE_EBUS_INSTANTIATION_DLL_MULTI_ADDRESS(RPI::SceneNotification);
-DECLARE_EBUS_INSTANTIATION_DLL_MULTI_ADDRESS(RPI::ShaderReloadNotifications);
+DECLARE_EBUS_INSTANTIATION_DLL_MULTI_ADDRESS(AZ::RPI::SceneNotification);
+DECLARE_EBUS_INSTANTIATION_DLL_MULTI_ADDRESS(AZ::RPI::ShaderReloadNotifications);
