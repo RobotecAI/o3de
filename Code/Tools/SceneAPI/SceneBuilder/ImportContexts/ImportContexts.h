@@ -54,22 +54,21 @@ namespace AZ
                 RenamedNodesMap& m_nodeNameMap; // Map of the nodes that have received a new name.
             };
 
-            //  NodeEncounteredContext
             //  Context pushed to indicate that a new Node has been found and any
             //  importers that have means to process the contained data should do so
             //  Member Variables:
             //      m_createdData - out container that importers must add their created data
             //          to.
-            struct NodeEncounteredContext
+            struct NodeEncounteredContextBase
                 : public ImportContext
             {
-                AZ_RTTI(NodeEncounteredContext, "{40C31D76-7101-4ACD-8849-0D6D0AF62855}", ImportContext);
+                AZ_RTTI(NodeEncounteredContextBase, "{40C31D76-7101-4ACD-8849-0D6D0AF62855}", ImportContext);
 
-                NodeEncounteredContext(Containers::Scene& scene,
+                NodeEncounteredContextBase(Containers::Scene& scene,
                     Containers::SceneGraph::NodeIndex currentGraphPosition,
                     RenamedNodesMap& nodeNameMap);
 
-                NodeEncounteredContext(Events::ImportEventContext& parent,
+                NodeEncounteredContextBase(Events::ImportEventContext& parent,
                     Containers::SceneGraph::NodeIndex currentGraphPosition,
                     RenamedNodesMap& nodeNameMap);
 
@@ -89,7 +88,7 @@ namespace AZ
             {
                 AZ_RTTI(SceneDataPopulatedContextBase, "{5F4CE8D2-EEAC-49F7-8065-0B6372162D6F}", ImportContext);
 
-                SceneDataPopulatedContextBase(NodeEncounteredContext& parent,
+                SceneDataPopulatedContextBase(NodeEncounteredContextBase& parent,
                     AZStd::shared_ptr<DataTypes::IGraphObject> nodeData,
                     const AZStd::string& dataName);
 
@@ -177,4 +176,3 @@ namespace AZ
         } // namespace SceneBuilder
     } // namespace SceneAPI
 } // namespace AZ
-

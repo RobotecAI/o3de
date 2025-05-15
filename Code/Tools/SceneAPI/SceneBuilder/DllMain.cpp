@@ -8,26 +8,30 @@
 
 #if !defined(AZ_MONOLITHIC_BUILD)
 
+#include "ImportContexts/AssImpImportContextProvider.h"
+#include "SceneBuilderSystemComponent.h"
+
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/ComponentApplicationBus.h>
-#include <AzCore/std/containers/vector.h>
 #include <AzCore/Module/Environment.h>
+#include <AzCore/std/containers/vector.h>
+#include <SceneAPI/SceneBuilder/ImportContextRegistry.h>
 #include <SceneAPI/SceneBuilder/SceneImportRequestHandler.h>
 
-#include <SceneAPI/SceneBuilder/SceneImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpAnimationImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpBitangentStreamImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpBlendShapeImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpBoneImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpColorStreamImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpCustomPropertyImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpMaterialImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpMeshImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpSkinImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpSkinWeightsImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpTangentStreamImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpTransformImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpUvMapImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpSkinImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpSkinWeightsImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpBoneImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpAnimationImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpBlendShapeImporter.h>
+#include <SceneAPI/SceneBuilder/SceneImporter.h>
 
 namespace AZ
 {
@@ -49,6 +53,9 @@ namespace AZ
                     // Global importer and behavior
                     g_componentDescriptors.push_back(SceneBuilder::SceneImporter::CreateDescriptor());
                     g_componentDescriptors.push_back(SceneImportRequestHandler::CreateDescriptor());
+
+                    // ImportContextProviderRegistry
+                    g_componentDescriptors.push_back(SceneBuilderSystemComponent::CreateDescriptor());
 
                     // Node and attribute importers
                     g_componentDescriptors.push_back(AssImpBitangentStreamImporter::CreateDescriptor());
@@ -103,6 +110,8 @@ namespace AZ
 
 extern "C" AZ_DLL_EXPORT void InitializeDynamicModule()
 {
+    // Scott-Meyers singleton as no clear way how to add SystemComponent to module
+    AZ::SceneAPI::SceneBuilder::ImportContextRegistryManager::GetInstance();
 }
 extern "C" AZ_DLL_EXPORT void Reflect(AZ::SerializeContext* context)
 {

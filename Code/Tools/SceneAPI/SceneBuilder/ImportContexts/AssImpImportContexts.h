@@ -50,9 +50,9 @@ namespace AZ
             //  importers that have means to process the contained data should do so
             struct AssImpNodeEncounteredContext
                 : public AssImpImportContext
-                , public NodeEncounteredContext
+                , public NodeEncounteredContextBase
             {
-                AZ_RTTI(AssImpNodeEncounteredContext, "{C2305BC5-EAEC-4515-BAD6-45E63C3FBD3D}", AssImpImportContext, NodeEncounteredContext);
+                AZ_RTTI(AssImpNodeEncounteredContext, "{C2305BC5-EAEC-4515-BAD6-45E63C3FBD3D}", AssImpImportContext, NodeEncounteredContextBase);
 
                 AssImpNodeEncounteredContext(Containers::Scene& scene,
                     Containers::SceneGraph::NodeIndex currentGraphPosition,
@@ -180,4 +180,3 @@ namespace AZ
         } // namespace SceneBuilder
     } // namespace SceneAPI
 } // namespace AZ
-

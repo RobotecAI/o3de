@@ -5,12 +5,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
-#include <AssImpTypeConverter.h>
 #include <AzCore/Debug/Trace.h>
 #include <AzCore/Settings/SettingsRegistry.h>
 #include <AzToolsFramework/Debug/TraceContext.h>
 #include <SceneAPI/SDKWrapper/AssImpNodeWrapper.h>
 #include <SceneAPI/SDKWrapper/AssImpSceneWrapper.h>
+#include <SceneAPI/SDKWrapper/AssImpTypeConverter.h>
 #include <SceneAPI/SceneCore/Utilities/Reporting.h>
 #include <assimp/postprocess.h>
 
@@ -39,11 +39,12 @@ namespace AZ
         }
 
 #if AZ_TRAIT_COMPILER_SUPPORT_CSIGNAL
-        void signal_handler([[maybe_unused]] int signal) 
+        void signal_handler([[maybe_unused]] int signal)
         {
             AZ_TracePrintf(
                 SceneAPI::Utilities::ErrorWindow,
-                "Failed to import scene with Asset Importer library. An %s has occurred in the library, this scene file cannot be parsed by the library.",
+                "Failed to import scene with Asset Importer library. An %s has occurred in the library, this scene file cannot be parsed "
+                "by the library.",
                 signal == SIGABRT ? "assert" : "unknown error");
         }
 #endif // AZ_TRAIT_COMPILER_SUPPORT_CSIGNAL
@@ -59,7 +60,7 @@ namespace AZ
 #ifdef _WRITE_ABORT_MSG
             _set_abort_behavior(0, _WRITE_ABORT_MSG);
 #endif // #ifdef _WRITE_ABORT_MSG
-            // Instead, capture any calls to abort with a signal handler, and report them.
+       // Instead, capture any calls to abort with a signal handler, and report them.
             auto previous_handler = std::signal(SIGABRT, signal_handler);
 #endif // AZ_TRAIT_COMPILER_SUPPORT_CSIGNAL
 
@@ -72,12 +73,11 @@ namespace AZ
             // aiProcess_JoinIdenticalVertices is not enabled because O3DE has a mesh optimizer that also does this,
             // this flag is disabled to keep AssImp output similar to FBX SDK to reduce downstream bugs for the initial AssImp release.
             // There's currently a minimum of properties and flags set to maximize compatibility with the existing node graph.
-            unsigned int importFlags =
-                aiProcess_Triangulate                                               // Triangulates all faces of all meshes
-                | static_cast<unsigned long>(aiProcess_GenBoundingBoxes)            // Generate bounding boxes
-                | aiProcess_GenNormals                                              // Generate normals for meshes
-                | (importSettings.m_optimizeScene ? aiProcess_OptimizeGraph : 0)    // Merge excess scene nodes together
-                | (importSettings.m_optimizeMeshes ? aiProcess_OptimizeMeshes : 0)  // Combines meshes in the scene together
+            unsigned int importFlags = aiProcess_Triangulate // Triangulates all faces of all meshes
+                | static_cast<unsigned long>(aiProcess_GenBoundingBoxes) // Generate bounding boxes
+                | aiProcess_GenNormals // Generate normals for meshes
+                | (importSettings.m_optimizeScene ? aiProcess_OptimizeGraph : 0) // Merge excess scene nodes together
+                | (importSettings.m_optimizeMeshes ? aiProcess_OptimizeMeshes : 0) // Combines meshes in the scene together
                 ;
 
             // aiProcess_LimitBoneWeights is not enabled because it will remove bones which are not associated with a mesh.
@@ -101,7 +101,10 @@ namespace AZ
 
             if (!m_assImpScene)
             {
-                AZ_TracePrintf(SceneAPI::Utilities::ErrorWindow, "Failed to import Asset Importer Scene. Error returned: %s", m_importer->GetErrorString());
+                AZ_TracePrintf(
+                    SceneAPI::Utilities::ErrorWindow,
+                    "Failed to import Asset Importer Scene. Error returned: %s",
+                    m_importer->GetErrorString());
                 return false;
             }
 
