@@ -34,20 +34,13 @@ namespace AZ
             void Clear() override;
             void CalculateAABBandVertices(const aiScene* scene, aiAABB& aabb, uint32_t& vertices);
 
-            enum class AxisVector
-            {
-                X = 0,
-                Y = 1,
-                Z = 2,
-                Unknown
-            };
-
-            AZStd::pair<AxisVector, int32_t> GetUpVectorAndSign() const;
-            AZStd::pair<AxisVector, int32_t> GetFrontVectorAndSign() const;
+            AZStd::pair<AxisVector, int32_t> GetUpVectorAndSign() const override;
+            AZStd::pair<AxisVector, int32_t> GetFrontVectorAndSign() const override;
+            float GetUnitSizeInMeters() const override;
 
             AZStd::string GetSceneFileName() const { return m_sceneFileName; }
-            aiAABB GetAABB() const { return m_aabb; }
-            uint32_t GetVertices() const { return m_vertices; }
+            AZ::Aabb GetAABB() const override;
+            uint32_t GetVerticesCount() const override { return m_vertices; }
         protected:
             const aiScene* m_assImpScene = nullptr;
             AZStd::unique_ptr<Assimp::Importer> m_importer;

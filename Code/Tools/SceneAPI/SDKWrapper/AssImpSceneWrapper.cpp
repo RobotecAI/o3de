@@ -5,12 +5,13 @@
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
+#include <AssImpTypeConverter.h>
 #include <AzCore/Debug/Trace.h>
 #include <AzCore/Settings/SettingsRegistry.h>
 #include <AzToolsFramework/Debug/TraceContext.h>
-#include <SceneAPI/SceneCore/Utilities/Reporting.h>
-#include <SceneAPI/SDKWrapper/AssImpSceneWrapper.h>
 #include <SceneAPI/SDKWrapper/AssImpNodeWrapper.h>
+#include <SceneAPI/SDKWrapper/AssImpSceneWrapper.h>
+#include <SceneAPI/SceneCore/Utilities/Reporting.h>
 #include <assimp/postprocess.h>
 
 #if AZ_TRAIT_COMPILER_SUPPORT_CSIGNAL
@@ -153,7 +154,7 @@ namespace AZ
 
         void AssImpSceneWrapper::Clear()
         {
-            if(m_importer)
+            if (m_importer)
             {
                 m_importer->FreeScene();
                 m_importer = AZStd::make_unique<Assimp::Importer>();
@@ -184,6 +185,37 @@ namespace AZ
             result.first = static_cast<AssImpSceneWrapper::AxisVector>(frontVectorRead);
             return result;
         }
-    }//namespace AssImpSDKWrapper
+
+        float AssImpSceneWrapper::GetUnitSizeInMeters() const
+        {
+            float unitSizeInMeters;
+            float originalUnitSizeInMeters;
+            /* Check if metadata has information about "UnitScaleFactor" or "OriginalUnitScaleFactor".
+             * This particular metadata is FBX format only. */
+            if (m_assImpScene->mMetaData->HasKey("UnitScaleFactor") || m_assImpScene->mMetaData->HasKey("OriginalUnitScaleFactor"))
+            {
+                // If either metadata piece is not available, the default of 1 will be used.
+                m_assImpScene->mMetaData->Get("UnitScaleFactor", unitSizeInMeters);
+                m_assImpScene->mMetaData->Get("OriginalUnitScaleFactor", originalUnitSizeInMeters);
+
+                /* Conversion factor for converting from centimeters to meters.
+                 * This applies to an FBX format in which the default unit is a centimeter. */
+                unitSizeInMeters = unitSizeInMeters * .01f;
+            }
+            else
+            {
+                // Some file formats (like DAE) embed the scale in the root transformation, so extract that scale from here.
+                auto rootTransform = AssImpSDKWrapper::AssImpTypeConverter::ToTransform(m_assImpScene->mRootNode->mTransformation);
+                unitSizeInMeters = rootTransform.ExtractScale().GetMaxElement();
+            }
+            return unitSizeInMeters;
+        }
+
+        AZ::Aabb AssImpSceneWrapper::GetAABB() const
+        {
+            return AZ::Aabb::CreateFromMinMaxValues(
+                m_aabb.mMin.x, m_aabb.mMin.y, m_aabb.mMin.z, m_aabb.mMax.x, m_aabb.mMax.y, m_aabb.mMax.z);
+        }
+    } // namespace AssImpSDKWrapper
 
 } // namespace AZ

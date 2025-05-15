@@ -6,12 +6,11 @@
  *
  */
 
+#include "SceneWrapper.h"
+
 #include <AzCore/Math/Vector3.h>
 #include <SceneAPI/SceneBuilder/SceneSystem.h>
 #include <SceneAPI/SceneCore/Utilities/Reporting.h>
-#include <SceneAPI/SDKWrapper/AssImpSceneWrapper.h>
-#include <SceneAPI/SDKWrapper/AssImpTypeConverter.h>
-#include <assimp/scene.h>
 
 
 namespace AZ
@@ -28,36 +27,9 @@ namespace AZ
 
         void SceneSystem::Set(const SDKScene::SceneWrapperBase* scene)
         {
-            // Get unit conversion factor to meter.
-            if (!azrtti_istypeof<AssImpSDKWrapper::AssImpSceneWrapper>(scene))
-            {
-                return;
-            }
+            m_unitSizeInMeters = scene->GetUnitSizeInMeters();
 
-            const AssImpSDKWrapper::AssImpSceneWrapper* assImpScene = azrtti_cast<const AssImpSDKWrapper::AssImpSceneWrapper*>(scene);
-
-            /* Check if metadata has information about "UnitScaleFactor" or "OriginalUnitScaleFactor". 
-             * This particular metadata is FBX format only. */
-            if (assImpScene->GetAssImpScene()->mMetaData->HasKey("UnitScaleFactor") ||
-                assImpScene->GetAssImpScene()->mMetaData->HasKey("OriginalUnitScaleFactor"))
-            {
-                // If either metadata piece is not available, the default of 1 will be used.
-                assImpScene->GetAssImpScene()->mMetaData->Get("UnitScaleFactor", m_unitSizeInMeters);
-                assImpScene->GetAssImpScene()->mMetaData->Get("OriginalUnitScaleFactor", m_originalUnitSizeInMeters);
-
-                /* Conversion factor for converting from centimeters to meters.
-                 * This applies to an FBX format in which the default unit is a centimeter. */
-                m_unitSizeInMeters = m_unitSizeInMeters * .01f;
-            }
-            else
-            {
-                // Some file formats (like DAE) embed the scale in the root transformation, so extract that scale from here.
-                auto rootTransform = 
-                    AssImpSDKWrapper::AssImpTypeConverter::ToTransform(assImpScene->GetAssImpScene()->mRootNode->mTransformation);
-                m_unitSizeInMeters = rootTransform.ExtractScale().GetMaxElement();
-            }
-
-            AZStd::pair<AssImpSDKWrapper::AssImpSceneWrapper::AxisVector, int32_t> upAxisAndSign = assImpScene->GetUpVectorAndSign();
+            AZStd::pair<SDKScene::SceneWrapperBase::AxisVector, int32_t> upAxisAndSign = scene->GetUpVectorAndSign();
 
             if (upAxisAndSign.second <= 0)
             {
@@ -65,10 +37,10 @@ namespace AZ
                 return;
             }
 
-            AZStd::pair<AssImpSDKWrapper::AssImpSceneWrapper::AxisVector, int32_t> frontAxisAndSign = assImpScene->GetFrontVectorAndSign();
+            AZStd::pair<SDKScene::SceneWrapperBase::AxisVector, int32_t> frontAxisAndSign = scene->GetFrontVectorAndSign();
 
-            if (upAxisAndSign.first != AssImpSDKWrapper::AssImpSceneWrapper::AxisVector::Z &&
-                upAxisAndSign.first != AssImpSDKWrapper::AssImpSceneWrapper::AxisVector::Unknown)
+            if (upAxisAndSign.first != SDKScene::SceneWrapperBase::AxisVector::Z &&
+                upAxisAndSign.first != SDKScene::SceneWrapperBase::AxisVector::Unknown)
             {
                 AZ::Matrix4x4 currentCoordMatrix = AZ::Matrix4x4::CreateIdentity();
                 //(UpVector = +Z, FrontVector = +Y, CoordSystem = -X(RightHanded))
@@ -80,7 +52,7 @@ namespace AZ
 
                 switch (upAxisAndSign.first)
                 {
-                case AssImpSDKWrapper::AssImpSceneWrapper::AxisVector::X: {
+                case SDKScene::SceneWrapperBase::AxisVector::X: {
                     if (frontAxisAndSign.second == 1)
                     {
                         currentCoordMatrix = AZ::Matrix4x4::CreateFromColumns(
@@ -99,7 +71,7 @@ namespace AZ
                     }
                 }
                 break;
-                case AssImpSDKWrapper::AssImpSceneWrapper::AxisVector::Y: {
+                case SDKScene::SceneWrapperBase::AxisVector::Y: {
                     if (frontAxisAndSign.second == 1)
                     {
                         currentCoordMatrix = AZ::Matrix4x4::CreateFromColumns(
@@ -120,7 +92,7 @@ namespace AZ
                 break;
                 }
                 AZ::Matrix4x4 adjustmatrix = targetCoordMatrix * currentCoordMatrix.GetInverseTransform();
-                m_adjustTransform.reset(new DataTypes::MatrixType(AssImpSDKWrapper::AssImpTypeConverter::ToTransform(adjustmatrix)));
+                m_adjustTransform.reset(new DataTypes::MatrixType(SDKScene::SceneTypeConverter::ToTransform(adjustmatrix)));
                 m_adjustTransformInverse.reset(new DataTypes::MatrixType(m_adjustTransform->GetInverseFull()));
             }
         }

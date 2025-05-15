@@ -138,11 +138,9 @@ namespace AZ
 
                 AZStd::pair<AssImpSDKWrapper::AssImpSceneWrapper::AxisVector, int32_t> upAxisAndSign = assImpSceneWrapper->GetUpVectorAndSign();
 
-                const aiAABB& aabb = assImpSceneWrapper->GetAABB();
-                aiVector3t dimension = aabb.mMax - aabb.mMin;
-                Vector3 t{ dimension.x, dimension.y, dimension.z };
-                scene.SetSceneDimension(t);
-                scene.SetSceneVertices(assImpSceneWrapper->GetVertices());
+                const AZ::Aabb& aabb = assImpSceneWrapper->GetAABB();
+                scene.SetSceneDimension(aabb.GetExtents());
+                scene.SetSceneVertices(assImpSceneWrapper->GetVerticesCount());
 
                 if (upAxisAndSign.second <= 0)
                 {
