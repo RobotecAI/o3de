@@ -38,8 +38,10 @@ namespace AZ
                     AZ_Error("SceneBuilder", false, "Incorrect scene type. Cannot create NodeEncounteredContext");
                     return nullptr;
                 }
-                return AZStd::make_shared<AssImpNodeEncounteredContext>(
+                auto context = AZStd::make_shared<AssImpNodeEncounteredContext>(
                     scene, currentGraphPosition, *assImpScene, sourceSceneSystem, nodeNameMap, *assImpNode);
+                context->m_contextProvider = this;
+                return context;
             }
 
             AZStd::shared_ptr<SceneDataPopulatedContextBase> AssImpImportContextProvider::CreateSceneDataPopulatedContext(
@@ -53,7 +55,10 @@ namespace AZ
                     return nullptr;
                 }
 
-                return AZStd::make_shared<AssImpSceneDataPopulatedContext>(*assImpParent, AZStd::move(graphData), dataName);
+                auto context = AZStd::make_shared<AssImpSceneDataPopulatedContext>(*assImpParent, AZStd::move(graphData), dataName);
+
+                context->m_contextProvider = this;
+                return context;
             }
 
             AZStd::shared_ptr<SceneNodeAppendedContextBase> AssImpImportContextProvider::CreateSceneNodeAppendedContext(
@@ -67,7 +72,9 @@ namespace AZ
                     return nullptr;
                 }
 
-                return AZStd::make_shared<AssImpSceneNodeAppendedContext>(*assImpParent, newIndex);
+                auto context = AZStd::make_shared<AssImpSceneNodeAppendedContext>(*assImpParent, newIndex);
+                context->m_contextProvider = this;
+                return context;
             }
 
             AZStd::shared_ptr<SceneAttributeDataPopulatedContextBase> AssImpImportContextProvider::CreateSceneAttributeDataPopulatedContext(
@@ -83,8 +90,10 @@ namespace AZ
                     AZ_Error("SceneBuilder", false, "Incorrect type of parent. Cannot create SceneAttributeDataPopulatedContext");
                     return nullptr;
                 }
-                return AZStd::make_shared<AssImpSceneAttributeDataPopulatedContext>(
+                auto context = AZStd::make_shared<AssImpSceneAttributeDataPopulatedContext>(
                     *assImpParent, AZStd::move(nodeData), attributeNodeIndex, dataName);
+                context->m_contextProvider = this;
+                return context;
             }
 
             AZStd::shared_ptr<SceneAttributeNodeAppendedContextBase> AssImpImportContextProvider::CreateSceneAttributeNodeAppendedContext(
@@ -97,7 +106,9 @@ namespace AZ
                     AZ_Error("SceneBuilder", false, "Incorrect type of parent. Cannot create SceneAttributeNodeAppendedContext");
                     return nullptr;
                 }
-                return AZStd::make_shared<AssImpSceneAttributeNodeAppendedContext>(*assImpParent, newIndex);
+                auto context = AZStd::make_shared<AssImpSceneAttributeNodeAppendedContext>(*assImpParent, newIndex);
+                context->m_contextProvider = this;
+                return context;
             }
 
             AZStd::shared_ptr<SceneNodeAddedAttributesContextBase> AssImpImportContextProvider::CreateSceneNodeAddedAttributesContext(
@@ -110,7 +121,9 @@ namespace AZ
                     AZ_Error("SceneBuilder", false, "Incorrect type of parent. Cannot create SceneNodeAddedAttributesContext");
                     return nullptr;
                 }
-                return AZStd::make_shared<AssImpSceneNodeAddedAttributesContext>(*assImpParent);
+                auto context = AZStd::make_shared<AssImpSceneNodeAddedAttributesContext>(*assImpParent);
+                context->m_contextProvider = this;
+                return context;
             }
 
             AZStd::shared_ptr<SceneNodeFinalizeContextBase> AssImpImportContextProvider::CreateSceneNodeFinalizeContext(
@@ -123,7 +136,9 @@ namespace AZ
                     AZ_Error("SceneBuilder", false, "Incorrect type of parent. Cannot create SceneNodeFinalizeContext");
                     return nullptr;
                 }
-                return AZStd::make_shared<AssImpSceneNodeFinalizeContext>(*assImpParent);
+                auto context = AZStd::make_shared<AssImpSceneNodeFinalizeContext>(*assImpParent);
+                context->m_contextProvider = this;
+                return context;
             }
 
             AZStd::shared_ptr<FinalizeSceneContextBase> AssImpImportContextProvider::CreateFinalizeSceneContext(
@@ -138,7 +153,9 @@ namespace AZ
                     AZ_Error("SceneBuilder", false, "Incorrect scene type. Cannot create FinalizeSceneContext");
                     return nullptr;
                 }
-                return AZStd::make_shared<AssImpFinalizeSceneContext>(scene, *assImpScene, sourceSceneSystem, nodeNameMap);
+                auto context = AZStd::make_shared<AssImpFinalizeSceneContext>(scene, *assImpScene, sourceSceneSystem, nodeNameMap);
+                context->m_contextProvider = this;
+                return context;
             }
         } // namespace SceneBuilder
     } // namespace SceneAPI

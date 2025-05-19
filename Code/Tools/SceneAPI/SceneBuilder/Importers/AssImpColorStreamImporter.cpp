@@ -113,12 +113,13 @@ namespace AZ
                         context.m_scene.GetGraph().AddChild(context.m_currentGraphPosition, nodeName.c_str());
 
                     Events::ProcessingResult colorMapResults;
-                    AssImpSceneAttributeDataPopulatedContext dataPopulated(context, vertexColors, newIndex, nodeName.c_str());
-                    colorMapResults = Events::Process(dataPopulated);
+                    AZStd::shared_ptr<SceneAttributeDataPopulatedContextBase> dataPopulated =
+                        context.m_contextProvider->CreateSceneAttributeDataPopulatedContext(context, vertexColors, newIndex, nodeName.c_str());
+                    colorMapResults = Events::Process(*dataPopulated);
 
                     if (colorMapResults != Events::ProcessingResult::Failure)
                     {
-                        colorMapResults = AddAttributeDataNodeWithContexts(dataPopulated);
+                        colorMapResults = AddAttributeDataNodeWithContexts(*dataPopulated);
                     }
 
                     combinedVertexColorResults += colorMapResults;

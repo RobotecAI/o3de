@@ -14,7 +14,7 @@
 #include <AzCore/std/smart_ptr/shared_ptr.h>
 #include <AzCore/std/string/string.h>
 #include <SceneAPI/SDKWrapper/NodeWrapper.h>
-#include <SceneAPI/SceneBuilder/ImportContexts/ImportContexts.h>
+#include <SceneAPI/SceneBuilder/SceneSystem.h>
 #include <SceneAPI/SceneCore/Containers/SceneGraph.h>
 
 namespace AZ::SDKScene
@@ -29,11 +29,22 @@ namespace AZ
 {
     namespace SceneAPI
     {
-        class SceneSystem;
+        namespace Containers
+        {
+            class Scene;
+        }
+
         namespace SceneBuilder
         {
             class RenamedNodesMap;
-
+            struct NodeEncounteredContextBase;
+            struct SceneDataPopulatedContextBase;
+            struct SceneNodeAppendedContextBase;
+            struct SceneAttributeDataPopulatedContextBase;
+            struct SceneAttributeNodeAppendedContextBase;
+            struct SceneNodeAddedAttributesContextBase;
+            struct SceneNodeFinalizeContextBase;
+            struct FinalizeSceneContextBase;
             // ImportContextProvider realizes factory pattern and provides classes specialized for particular Scene Import library.
             struct ImportContextProvider
             {

@@ -60,7 +60,10 @@ namespace AZ
                     SceneNodeAddedAttributesContextBase& parent) override;
 
                 AZStd::shared_ptr<FinalizeSceneContextBase> CreateFinalizeSceneContext(
-                    Containers::Scene& scene, const SceneSystem& sourceSceneSystem, SDKScene::SceneWrapperBase& sourceScene, RenamedNodesMap& nodeNameMap) override;
+                    Containers::Scene& scene,
+                    const SceneSystem& sourceSceneSystem,
+                    SDKScene::SceneWrapperBase& sourceScene,
+                    RenamedNodesMap& nodeNameMap) override;
 
                 bool CanHandleExtension(AZStd::string_view fileExtension) const override
                 {
@@ -77,9 +80,6 @@ namespace AZ
                 {
                     return "AssImp";
                 }
-
-            private:
-                // const AssImpSDKWrapper::AssImpSceneWrapper* m_sourceScene;
             };
         } // namespace SceneBuilder
     } // namespace SceneAPI

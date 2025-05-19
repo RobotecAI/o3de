@@ -10,6 +10,8 @@
 #include <AzCore/std/smart_ptr/make_shared.h>
 #include <AzCore/std/string/conversions.h>
 #include <AzToolsFramework/Debug/TraceContext.h>
+#include <SceneAPI/SDKWrapper/AssImpNodeWrapper.h>
+#include <SceneAPI/SDKWrapper/AssImpSceneWrapper.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpSkinWeightsImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/ImporterUtilities.h>
 #include <SceneAPI/SceneBuilder/Importers/Utilities/AssImpMeshImporterUtilities.h>
@@ -17,8 +19,6 @@
 #include <SceneAPI/SceneCore/Events/ImportEventContext.h>
 #include <SceneAPI/SceneData/GraphData/MeshData.h>
 #include <SceneAPI/SceneData/GraphData/SkinWeightData.h>
-#include <SceneAPI/SDKWrapper/AssImpNodeWrapper.h>
-#include <SceneAPI/SDKWrapper/AssImpSceneWrapper.h>
 
 namespace AZ
 {
@@ -49,7 +49,7 @@ namespace AZ
                 const aiNode* currentNode = context.m_sourceNode.GetAssImpNode();
                 const aiScene* scene = context.m_sourceScene.GetAssImpScene();
 
-                if(currentNode->mNumMeshes <= 0)
+                if (currentNode->mNumMeshes <= 0)
                 {
                     return Events::ProcessingResult::Ignored;
                 }
@@ -64,16 +64,16 @@ namespace AZ
                 const uint64_t totalVertices = GetVertexCountForAllMeshesOnNode(*currentNode, *scene);
 
                 int vertexCount = 0;
-                for(unsigned nodeMeshIndex = 0; nodeMeshIndex < currentNode->mNumMeshes; ++nodeMeshIndex)
+                for (unsigned nodeMeshIndex = 0; nodeMeshIndex < currentNode->mNumMeshes; ++nodeMeshIndex)
                 {
                     int sceneMeshIndex = currentNode->mMeshes[nodeMeshIndex];
                     const aiMesh* mesh = scene->mMeshes[sceneMeshIndex];
 
-                    for(unsigned b = 0; b < mesh->mNumBones; ++b)
+                    for (unsigned b = 0; b < mesh->mNumBones; ++b)
                     {
                         const aiBone* bone = mesh->mBones[b];
 
-                        if(bone->mNumWeights <= 0)
+                        if (bone->mNumWeights <= 0)
                         {
                             continue;
                         }
@@ -86,7 +86,8 @@ namespace AZ
                             weightsIndexForMesh =
                                 context.m_scene.GetGraph().AddChild(context.m_currentGraphPosition, skinWeightName.c_str());
 
-                            AZ_Error("SkinWeightsImporter", weightsIndexForMesh.IsValid(), "Failed to create SceneGraph node for attribute.");
+                            AZ_Error(
+                                "SkinWeightsImporter", weightsIndexForMesh.IsValid(), "Failed to create SceneGraph node for attribute.");
                             if (!weightsIndexForMesh.IsValid())
                             {
                                 combinedSkinWeightsResult += Events::ProcessingResult::Failure;
@@ -111,12 +112,13 @@ namespace AZ
                 }
 
                 Events::ProcessingResult skinWeightsResult;
-                AssImpSceneAttributeDataPopulatedContext dataPopulated(context, skinWeightData, weightsIndexForMesh, skinWeightName);
-                skinWeightsResult = Events::Process(dataPopulated);
+                auto dataPopulated = context.m_contextProvider->CreateSceneAttributeDataPopulatedContext(
+                    context, skinWeightData, weightsIndexForMesh, skinWeightName);
+                skinWeightsResult = Events::Process(*dataPopulated);
 
                 if (skinWeightsResult != Events::ProcessingResult::Failure)
                 {
-                    skinWeightsResult = AddAttributeDataNodeWithContexts(dataPopulated);
+                    skinWeightsResult = AddAttributeDataNodeWithContexts(*dataPopulated);
                 }
 
                 combinedSkinWeightsResult += skinWeightsResult;

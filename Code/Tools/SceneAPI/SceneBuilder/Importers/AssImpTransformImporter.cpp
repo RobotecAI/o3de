@@ -7,19 +7,19 @@
  */
 #include <SceneAPI/SceneBuilder/Importers/AssImpTransformImporter.h>
 
-#include <AzCore/std/smart_ptr/make_shared.h>
 #include <AzCore/Serialization/SerializeContext.h>
+#include <AzCore/std/smart_ptr/make_shared.h>
 #include <AzToolsFramework/Debug/TraceContext.h>
-#include <SceneAPI/SceneBuilder/SceneSystem.h>
-#include <SceneAPI/SceneBuilder/Importers/ImporterUtilities.h>
-#include <SceneAPI/SceneBuilder/Importers/Utilities/RenamedNodesMap.h>
-#include <SceneAPI/SceneCore/Utilities/Reporting.h>
-#include <SceneAPI/SceneData/GraphData/TransformData.h>
-#include <SceneAPI/SDKWrapper/AssImpTypeConverter.h>
 #include <SceneAPI/SDKWrapper/AssImpNodeWrapper.h>
 #include <SceneAPI/SDKWrapper/AssImpSceneWrapper.h>
-#include <assimp/scene.h>
+#include <SceneAPI/SDKWrapper/AssImpTypeConverter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpImporterUtilities.h>
+#include <SceneAPI/SceneBuilder/Importers/ImporterUtilities.h>
+#include <SceneAPI/SceneBuilder/Importers/Utilities/RenamedNodesMap.h>
+#include <SceneAPI/SceneBuilder/SceneSystem.h>
+#include <SceneAPI/SceneCore/Utilities/Reporting.h>
+#include <SceneAPI/SceneData/GraphData/TransformData.h>
+#include <assimp/scene.h>
 
 namespace AZ
 {
@@ -86,12 +86,13 @@ namespace AZ
                         }
 
                         Events::ProcessingResult transformAttributeResult;
-                        AssImpSceneAttributeDataPopulatedContext dataPopulated(context, transformData, newIndex, nodeName);
-                        transformAttributeResult = Events::Process(dataPopulated);
+                        auto dataPopulated =
+                            context.m_contextProvider->CreateSceneAttributeDataPopulatedContext(context, transformData, newIndex, nodeName);
+                        transformAttributeResult = Events::Process(*dataPopulated);
 
                         if (transformAttributeResult != Events::ProcessingResult::Failure)
                         {
-                            transformAttributeResult = AddAttributeDataNodeWithContexts(dataPopulated);
+                            transformAttributeResult = AddAttributeDataNodeWithContexts(*dataPopulated);
                         }
 
                         return transformAttributeResult;
