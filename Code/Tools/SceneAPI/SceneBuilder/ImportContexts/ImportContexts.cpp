@@ -33,21 +33,21 @@ namespace AZ
                 m_currentGraphPosition = Containers::SceneGraph::NodeIndex();
             }
 
-            NodeEncounteredContextBase::NodeEncounteredContextBase(Containers::Scene& scene,
+            NodeEncounteredContext::NodeEncounteredContext(Containers::Scene& scene,
                 Containers::SceneGraph::NodeIndex currentGraphPosition,
                 RenamedNodesMap& nodeNameMap)
                 : ImportContext(scene, currentGraphPosition, nodeNameMap)
             {
             }
 
-            NodeEncounteredContextBase::NodeEncounteredContextBase(
+            NodeEncounteredContext::NodeEncounteredContext(
                 Events::ImportEventContext& parent, Containers::SceneGraph::NodeIndex currentGraphPosition,
                 RenamedNodesMap& nodeNameMap)
                 : ImportContext(parent.GetScene(), currentGraphPosition, nodeNameMap)
             {
             }
 
-            SceneDataPopulatedContextBase::SceneDataPopulatedContextBase(NodeEncounteredContextBase& parent,
+            SceneDataPopulatedContextBase::SceneDataPopulatedContextBase(NodeEncounteredContext& parent,
                 AZStd::shared_ptr<DataTypes::IGraphObject> graphData, const AZStd::string& dataName)
                 : ImportContext(parent.m_scene, parent.m_currentGraphPosition, parent.m_nodeNameMap)
                 , m_graphData(AZStd::move(graphData))

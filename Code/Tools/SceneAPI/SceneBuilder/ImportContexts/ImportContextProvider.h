@@ -37,7 +37,7 @@ namespace AZ
         namespace SceneBuilder
         {
             class RenamedNodesMap;
-            struct NodeEncounteredContextBase;
+            struct NodeEncounteredContext;
             struct SceneDataPopulatedContextBase;
             struct SceneNodeAppendedContextBase;
             struct SceneAttributeDataPopulatedContextBase;
@@ -52,7 +52,7 @@ namespace AZ
 
                 virtual ~ImportContextProvider() = default;
 
-                virtual AZStd::shared_ptr<NodeEncounteredContextBase> CreateNodeEncounteredContext(
+                virtual AZStd::shared_ptr<NodeEncounteredContext> CreateNodeEncounteredContext(
                     Containers::Scene& scene,
                     Containers::SceneGraph::NodeIndex currentGraphPosition,
                     const SceneSystem& sourceSceneSystem,
@@ -61,7 +61,7 @@ namespace AZ
                     AZ::SDKNode::NodeWrapper& sourceNode) = 0;
 
                 virtual AZStd::shared_ptr<SceneDataPopulatedContextBase> CreateSceneDataPopulatedContext(
-                    NodeEncounteredContextBase& parent,
+                    NodeEncounteredContext& parent,
                     AZStd::shared_ptr<DataTypes::IGraphObject> graphData,
                     const AZStd::string& dataName) = 0;
 

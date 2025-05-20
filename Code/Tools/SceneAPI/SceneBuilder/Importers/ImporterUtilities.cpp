@@ -31,7 +31,6 @@ namespace AZ
         {
             static const float g_sceneUtilityEqualityEpsilon = 0.001f;
 
-            //TODO: this function should be generic
             CoreProcessingResult AddDataNodeWithContexts(SceneDataPopulatedContextBase& dataPopulated)
             {
                 AZ_TraceContext("Node Name", dataPopulated.m_dataName);
@@ -45,19 +44,19 @@ namespace AZ
                     AZStd::move(dataPopulated.m_graphData));
 
                 // Use context provider to create the appropriate context objects
-                AZStd::shared_ptr<SceneNodeAppendedContextBase> nodeAppended = 
+                AZStd::shared_ptr<SceneNodeAppendedContextBase> nodeAppended =
                     dataPopulated.m_contextProvider->CreateSceneNodeAppendedContext(dataPopulated, dataPopulated.m_currentGraphPosition);
                 if (nodeAppended)
                 {
                     nodeResults += Events::Process(*nodeAppended);
 
-                    AZStd::shared_ptr<SceneNodeAddedAttributesContextBase> addedAttributes = 
+                    AZStd::shared_ptr<SceneNodeAddedAttributesContextBase> addedAttributes =
                         dataPopulated.m_contextProvider->CreateSceneNodeAddedAttributesContext(*nodeAppended);
                     if (addedAttributes)
                     {
                         nodeResults += Events::Process(*addedAttributes);
 
-                        AZStd::shared_ptr<SceneNodeFinalizeContextBase> finalizeNode = 
+                        AZStd::shared_ptr<SceneNodeFinalizeContextBase> finalizeNode =
                             dataPopulated.m_contextProvider->CreateSceneNodeFinalizeContext(*addedAttributes);
                         if (finalizeNode)
                         {
@@ -69,7 +68,6 @@ namespace AZ
                 return nodeResults.GetResult();
             }
 
-            //TODO: this function should be generic
             CoreProcessingResult AddAttributeDataNodeWithContexts(SceneAttributeDataPopulatedContextBase& dataPopulated)
             {
                 AZ_TraceContext("Node Name", dataPopulated.m_dataName);
@@ -83,9 +81,8 @@ namespace AZ
 
                 dataPopulated.m_scene.GetGraph().SetContent(dataPopulated.m_currentGraphPosition,
                     AZStd::move(dataPopulated.m_graphData));
-                
                 // Use context provider to create the appropriate attribute node context
-                AZStd::shared_ptr<SceneAttributeNodeAppendedContextBase> nodeAppended = 
+                AZStd::shared_ptr<SceneAttributeNodeAppendedContextBase> nodeAppended =
                     dataPopulated.m_contextProvider->CreateSceneAttributeNodeAppendedContext(dataPopulated, dataPopulated.m_currentGraphPosition);
                 if (nodeAppended)
                 {

@@ -57,21 +57,22 @@ namespace AZ
                 ImportContextProvider* m_contextProvider; // The provider that created this context.
             };
 
+            //  NodeEncounteredContext
             //  Context pushed to indicate that a new Node has been found and any
             //  importers that have means to process the contained data should do so
             //  Member Variables:
             //      m_createdData - out container that importers must add their created data
             //          to.
-            struct NodeEncounteredContextBase
+            struct NodeEncounteredContext
                 : public ImportContext
             {
-                AZ_RTTI(NodeEncounteredContextBase, "{40C31D76-7101-4ACD-8849-0D6D0AF62855}", ImportContext);
+                AZ_RTTI(NodeEncounteredContext, "{40C31D76-7101-4ACD-8849-0D6D0AF62855}", ImportContext);
 
-                NodeEncounteredContextBase(Containers::Scene& scene,
+                NodeEncounteredContext(Containers::Scene& scene,
                     Containers::SceneGraph::NodeIndex currentGraphPosition,
                     RenamedNodesMap& nodeNameMap);
 
-                NodeEncounteredContextBase(Events::ImportEventContext& parent,
+                NodeEncounteredContext(Events::ImportEventContext& parent,
                     Containers::SceneGraph::NodeIndex currentGraphPosition,
                     RenamedNodesMap& nodeNameMap);
 
@@ -91,7 +92,7 @@ namespace AZ
             {
                 AZ_RTTI(SceneDataPopulatedContextBase, "{5F4CE8D2-EEAC-49F7-8065-0B6372162D6F}", ImportContext);
 
-                SceneDataPopulatedContextBase(NodeEncounteredContextBase& parent,
+                SceneDataPopulatedContextBase(NodeEncounteredContext& parent,
                     AZStd::shared_ptr<DataTypes::IGraphObject> nodeData,
                     const AZStd::string& dataName);
 

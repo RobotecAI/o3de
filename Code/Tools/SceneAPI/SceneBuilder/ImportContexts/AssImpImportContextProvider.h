@@ -28,7 +28,7 @@ namespace AZ
 
                 AssImpImportContextProvider() = default;
 
-                AZStd::shared_ptr<NodeEncounteredContextBase> CreateNodeEncounteredContext(
+                AZStd::shared_ptr<NodeEncounteredContext> CreateNodeEncounteredContext(
                     Containers::Scene& scene,
                     Containers::SceneGraph::NodeIndex currentGraphPosition,
                     const SceneSystem& sourceSceneSystem,
@@ -37,7 +37,7 @@ namespace AZ
                     SDKNode::NodeWrapper& sourceNode) override;
 
                 AZStd::shared_ptr<SceneDataPopulatedContextBase> CreateSceneDataPopulatedContext(
-                    NodeEncounteredContextBase& parent,
+                    NodeEncounteredContext& parent,
                     AZStd::shared_ptr<DataTypes::IGraphObject> graphData,
                     const AZStd::string& dataName) override;
 

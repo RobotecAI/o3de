@@ -81,7 +81,9 @@ namespace AZ
                 Containers::Scene scene;
                 Import::ManifestImportRequestHandler manifestHandler;
                 manifestHandler.LoadAsset(
-                    scene, sourceAssetPath, Uuid::CreateNull(), Events::AssetImportRequest::RequestingApplication::AssetProcessor);
+                    scene, sourceAssetPath,
+                    Uuid::CreateNull(),
+                    Events::AssetImportRequest::RequestingApplication::AssetProcessor);
 
                 // Search for the ImportGroup. If it's there, get the new import settings. If not, we'll just use the defaults.
                 size_t count = scene.GetManifest().GetEntryCount();

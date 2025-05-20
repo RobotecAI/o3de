@@ -32,7 +32,7 @@ namespace AZ
                 RenamedNodesMap& nodeNameMap,
                 AssImpSDKWrapper::AssImpNodeWrapper& sourceNode)
                 : AssImpImportContext(sourceScene, sourceSceneSystem, sourceNode)
-                , NodeEncounteredContextBase(scene, currentGraphPosition, nodeNameMap)
+                , NodeEncounteredContext(scene, currentGraphPosition, nodeNameMap)
             {
             }
 
@@ -44,7 +44,7 @@ namespace AZ
                 RenamedNodesMap& nodeNameMap,
                 AssImpSDKWrapper::AssImpNodeWrapper& sourceNode)
                 : AssImpImportContext(sourceScene, sourceSceneSystem, sourceNode)
-                , NodeEncounteredContextBase(parent.GetScene(), currentGraphPosition, nodeNameMap)
+                , NodeEncounteredContext(parent.GetScene(), currentGraphPosition, nodeNameMap)
             {
             }
 

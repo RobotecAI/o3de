@@ -15,7 +15,7 @@ namespace AZ
     {
         namespace SceneBuilder
         {
-            AZStd::shared_ptr<NodeEncounteredContextBase> AssImpImportContextProvider::CreateNodeEncounteredContext(
+            AZStd::shared_ptr<NodeEncounteredContext> AssImpImportContextProvider::CreateNodeEncounteredContext(
                 Containers::Scene& scene,
                 Containers::SceneGraph::NodeIndex currentGraphPosition,
                 const SceneSystem& sourceSceneSystem,
@@ -45,7 +45,7 @@ namespace AZ
             }
 
             AZStd::shared_ptr<SceneDataPopulatedContextBase> AssImpImportContextProvider::CreateSceneDataPopulatedContext(
-                NodeEncounteredContextBase& parent, AZStd::shared_ptr<DataTypes::IGraphObject> graphData, const AZStd::string& dataName)
+                NodeEncounteredContext& parent, AZStd::shared_ptr<DataTypes::IGraphObject> graphData, const AZStd::string& dataName)
             {
                 // Downcast the parent to the AssImp-specific type to access AssImpImportContext members
                 AssImpNodeEncounteredContext* assImpParent = azrtti_cast<AssImpNodeEncounteredContext*>(&parent);

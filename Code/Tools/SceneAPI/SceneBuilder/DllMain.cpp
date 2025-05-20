@@ -8,30 +8,29 @@
 
 #if !defined(AZ_MONOLITHIC_BUILD)
 
-#include "ImportContexts/AssImpImportContextProvider.h"
-#include "SceneBuilderSystemComponent.h"
-
 #include <AzCore/Component/Component.h>
 #include <AzCore/Component/ComponentApplicationBus.h>
-#include <AzCore/Module/Environment.h>
 #include <AzCore/std/containers/vector.h>
-#include <SceneAPI/SceneBuilder/ImportContextRegistry.h>
+#include <AzCore/Module/Environment.h>
 #include <SceneAPI/SceneBuilder/SceneImportRequestHandler.h>
 
-#include <SceneAPI/SceneBuilder/Importers/AssImpAnimationImporter.h>
+#include <SceneAPI/SceneBuilder/SceneImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpBitangentStreamImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpBlendShapeImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpBoneImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpColorStreamImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpCustomPropertyImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpMaterialImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpMeshImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpSkinImporter.h>
-#include <SceneAPI/SceneBuilder/Importers/AssImpSkinWeightsImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpTangentStreamImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpTransformImporter.h>
 #include <SceneAPI/SceneBuilder/Importers/AssImpUvMapImporter.h>
-#include <SceneAPI/SceneBuilder/SceneImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpSkinImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpSkinWeightsImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpBoneImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpAnimationImporter.h>
+#include <SceneAPI/SceneBuilder/Importers/AssImpBlendShapeImporter.h>
+#include <SceneAPI/SceneBuilder/ImportContexts/AssImpImportContextProvider.h>
+#include <SceneAPI/SceneBuilder/SceneBuilderSystemComponent.h>
+
 
 namespace AZ
 {
