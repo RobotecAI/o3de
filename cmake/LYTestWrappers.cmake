@@ -47,7 +47,7 @@ endfunction()
 function(ly_check_valid_test_requires)
     foreach(name_check ${ARGV})
         if(NOT ${name_check} IN_LIST LY_TEST_GLOBAL_KNOWN_REQUIREMENTS)
-           message(SEND_ERROR "Invalid test requirement name ${name_check} in ${CMAKE_CURRENT_LIST_FILE}, it can only be one of the following: ${LY_TEST_GLOBAL_KNOWN_REQUIREMENTS} or unspecified")
+            message(SEND_ERROR "Invalid test requirement name ${name_check} in ${CMAKE_CURRENT_LIST_FILE}, it can only be one of the following: ${LY_TEST_GLOBAL_KNOWN_REQUIREMENTS} or unspecified")
         endif()
     endforeach()
 endfunction()
@@ -173,7 +173,7 @@ function(ly_add_test)
         list(APPEND final_labels ${ly_add_test_LABELS})
     endif()
 
-    # Allow TIAF to apply the label of supported test categories from being run by CTest 
+    # Allow TIAF to apply the label of supported test categories from being run by CTest
     o3de_test_impact_apply_test_labels(${ly_add_test_TEST_LIBRARY} final_labels)
 
     # labels expects a single param, of concatenated labels
@@ -404,7 +404,7 @@ function(ly_add_googletest)
         endif()
 
         # If command is not supplied attempts, uses the AzTestRunner to run googletest on the supplied NAME
-        set(full_test_command $<TARGET_FILE:AZ::AzTestRunner> $<TARGET_FILE:${build_target}> AzRunUnitTests)
+        set(full_test_command $<GENEX_EVAL:$<TARGET_FILE:AZ::AzTestRunner>> $<TARGET_FILE:${build_target}> AzRunUnitTests)
         # Add AzTestRunner as a build dependency
         ly_add_dependencies(${build_target} AZ::AzTestRunner)
         # Start the test target params and dd the command runner command
