@@ -662,7 +662,7 @@ namespace AzToolsFramework
                         {
                             continue;
                         }
-                        
+
                         constexpr const auto parentObjectName = "Parent Entity";
                         auto parentIt = componentIt->value.FindMember(parentObjectName);
                         if (parentIt == componentIt->value.MemberEnd() || !parentIt->value.IsString())
