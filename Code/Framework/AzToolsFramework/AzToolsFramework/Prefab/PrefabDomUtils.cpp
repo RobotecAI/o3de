@@ -664,7 +664,7 @@ namespace AzToolsFramework
                             continue;
                         }
                         
-                        AZStd::string componentAlias(componentsTypeIt->value.GetString());
+                        const AZStd::string componentAlias(componentsTypeIt->value.GetString());
 
                         if (!AZStd::regex_match(componentAlias, Internal::TransformComponentRegex))
                         {

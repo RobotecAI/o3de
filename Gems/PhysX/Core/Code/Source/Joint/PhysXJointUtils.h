@@ -45,6 +45,7 @@ namespace PhysX
 
         namespace PxJointFactories
         {
+
             PxJointUniquePtr CreatePxD6Joint(const PhysX::D6JointLimitConfiguration& configuration,
                 AzPhysics::SceneHandle sceneHandle,
                 AzPhysics::SimulatedBodyHandle parentBodyHandle,

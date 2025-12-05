@@ -1,0 +1,6 @@
+{
+    "Type": "JsonSerialization",
+    "Version": 1,
+    "ClassName": "AZStd::vector<SeedInfo, allocator>",
+    "ClassData": {}
+}

@@ -233,7 +233,7 @@ ForwardPassOutput AutoBrick_ForwardPassPS(VSOutput IN)
     OUT.m_diffuseColor.w = -1; // Subsurface scattering is disabled
     OUT.m_specularColor = lightingOutput.m_specularColor;
     OUT.m_specularF0 = lightingOutput.m_specularF0;
-    OUT.m_albedo = lightingOutput.m_albedo;
+    OUT.m_normal = lightingOutput.m_albedo;
     OUT.m_normal = lightingOutput.m_normal;
 
     return OUT;
