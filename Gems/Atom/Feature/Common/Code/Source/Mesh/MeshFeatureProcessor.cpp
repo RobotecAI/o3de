@@ -2197,7 +2197,13 @@ namespace AZ
                 if (!r_meshInstancingEnabled || instanceGroupInsertResult.m_instanceCount == 1)
                 {
                     // setup the mesh draw packet
-                    RPI::MeshDrawPacket drawPacket(modelLod, meshIndex, material, meshObjectSrg, customMaterialInfo.m_uvMapping);
+                    RPI::MeshDrawPacket drawPacket(
+                        modelLod,
+                        meshIndex,
+                        GetMeshInfoIndex(modelLodIndex, meshIndex),
+                        material,
+                        meshObjectSrg,
+                        customMaterialInfo.m_uvMapping);
 
                     // set the shader option to select forward pass IBL specular if necessary
                     if (!drawPacket.SetShaderOption(s_o_meshUseForwardPassIBLSpecular_Name, AZ::RPI::ShaderOptionValue{ m_descriptor.m_useForwardPassIblSpecular }))
@@ -3144,6 +3150,13 @@ namespace AZ
                 handler.Disconnect();
             }
             handler.Connect(m_meshDrawPacketUpdatedEvent);
+        }
+
+        int32_t ModelDataInstance::GetMeshInfoIndex(size_t modelLodIndex, size_t meshIndex) const
+        {
+            // Stride must be >= max meshes per LOD; matches MaxSubmeshPerEntity in SegmentationFeatureProcessorInterface.h.
+            static constexpr int32_t MeshInfoIndexMeshesPerLod = 32;
+            return static_cast<int32_t>(modelLodIndex * MeshInfoIndexMeshesPerLod + meshIndex);
         }
 
     } // namespace Render

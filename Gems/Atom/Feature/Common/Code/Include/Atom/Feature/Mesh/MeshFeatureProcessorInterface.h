@@ -132,6 +132,9 @@ namespace AZ
             virtual void ConnectMeshDrawPacketUpdatedHandler(MeshDrawPacketUpdatedEvent::Handler& handler) = 0;
 
             virtual CustomMaterialInfo GetCustomMaterialWithFallback(const CustomMaterialId& id) const = 0;
+
+            //! Returns lodIndex * 32 + meshIndex, the value placed in DrawSrg::m_meshInfoIndex per draw call.
+            virtual int32_t GetMeshInfoIndex(size_t modelLodIndex, size_t meshIndex) const = 0;
         };
 
         using CustomMaterialMap = AZStd::unordered_map<CustomMaterialId, CustomMaterialInfo>;

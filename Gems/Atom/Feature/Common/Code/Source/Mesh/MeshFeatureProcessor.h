@@ -115,6 +115,7 @@ namespace AZ
             void BuildDrawPacketList(MeshFeatureProcessor* meshFeatureProcessor, size_t modelLodIndex);
             void SetRayTracingData(MeshFeatureProcessor* meshFeatureProcessor);
             void RemoveRayTracingData(RayTracingFeatureProcessor* rayTracingFeatureProcessor);
+            int32_t GetMeshInfoIndex(size_t modelLodIndex, size_t meshIndex) const override;
             void SetIrradianceData(
                 RayTracingFeatureProcessor::SubMesh& subMesh,
                 const Data::Instance<RPI::Material> material,
