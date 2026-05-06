@@ -3154,9 +3154,12 @@ namespace AZ
 
         int32_t ModelDataInstance::GetMeshInfoIndex(size_t modelLodIndex, size_t meshIndex) const
         {
-            // Stride must be >= max meshes per LOD; matches MaxSubmeshPerEntity in SegmentationFeatureProcessorInterface.h.
-            static constexpr int32_t MeshInfoIndexMeshesPerLod = 32;
-            return static_cast<int32_t>(modelLodIndex * MeshInfoIndexMeshesPerLod + meshIndex);
+            // Simplified version of the function from PR #19123
+            // Indexes all submeshes in a globally unique way.
+            static constexpr uint32_t MeshInfoIndexMeshesPerLod = 32;
+            static constexpr uint32_t MeshInfoIndicesPerMesh = MeshInfoIndexMeshesPerLod * RPI::ModelLodAsset::LodCountMax;
+            return static_cast<int32_t>(
+                m_objectId.GetIndex() * MeshInfoIndicesPerMesh + modelLodIndex * MeshInfoIndexMeshesPerLod + meshIndex);
         }
 
     } // namespace Render
