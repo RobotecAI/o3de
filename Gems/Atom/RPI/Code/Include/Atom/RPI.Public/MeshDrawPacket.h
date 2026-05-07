@@ -53,6 +53,7 @@ namespace AZ
             MeshDrawPacket(
                 ModelLod& modelLod,
                 size_t modelLodMeshIndex,
+                int32_t meshInfoIndex,
                 Data::Instance<Material> materialOverride,
                 Data::Instance<ShaderResourceGroup> objectSrg,
                 const MaterialModelUvOverrideMap& materialModelUvMap = {});
@@ -118,6 +119,9 @@ namespace AZ
 
             // The index of the mesh within m_modelLod that is represented by the DrawPacket
             size_t m_modelLodMeshIndex;
+
+            // Compact LOD-stable index: lodIndex * 32 + meshIndex. See ModelDataInstance::GetMeshInfoIndex.
+            int32_t m_meshInfoIndex = -1;
 
             // The per-object shader resource group
             Data::Instance<ShaderResourceGroup> m_objectSrg;

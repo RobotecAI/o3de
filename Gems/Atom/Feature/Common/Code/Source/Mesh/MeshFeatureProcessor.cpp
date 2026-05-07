@@ -2197,7 +2197,13 @@ namespace AZ
                 if (!r_meshInstancingEnabled || instanceGroupInsertResult.m_instanceCount == 1)
                 {
                     // setup the mesh draw packet
-                    RPI::MeshDrawPacket drawPacket(modelLod, meshIndex, material, meshObjectSrg, customMaterialInfo.m_uvMapping);
+                    RPI::MeshDrawPacket drawPacket(
+                        modelLod,
+                        meshIndex,
+                        GetMeshInfoIndex(modelLodIndex, meshIndex),
+                        material,
+                        meshObjectSrg,
+                        customMaterialInfo.m_uvMapping);
 
                     // set the shader option to select forward pass IBL specular if necessary
                     if (!drawPacket.SetShaderOption(s_o_meshUseForwardPassIBLSpecular_Name, AZ::RPI::ShaderOptionValue{ m_descriptor.m_useForwardPassIblSpecular }))
@@ -3144,6 +3150,16 @@ namespace AZ
                 handler.Disconnect();
             }
             handler.Connect(m_meshDrawPacketUpdatedEvent);
+        }
+
+        int32_t ModelDataInstance::GetMeshInfoIndex(size_t modelLodIndex, size_t meshIndex) const
+        {
+            // Simplified version of the function from PR #19123
+            // Indexes all submeshes in a globally unique way.
+            static constexpr uint32_t MeshInfoIndexMeshesPerLod = 32;
+            static constexpr uint32_t MeshInfoIndicesPerMesh = MeshInfoIndexMeshesPerLod * RPI::ModelLodAsset::LodCountMax;
+            return static_cast<int32_t>(
+                m_objectId.GetIndex() * MeshInfoIndicesPerMesh + modelLodIndex * MeshInfoIndexMeshesPerLod + meshIndex);
         }
 
     } // namespace Render

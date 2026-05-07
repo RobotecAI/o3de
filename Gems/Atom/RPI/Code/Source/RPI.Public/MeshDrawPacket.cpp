@@ -34,12 +34,14 @@ namespace AZ
         MeshDrawPacket::MeshDrawPacket(
             ModelLod& modelLod,
             size_t modelLodMeshIndex,
+            int32_t meshInfoIndex,
             Data::Instance<Material> materialOverride,
             Data::Instance<ShaderResourceGroup> objectSrg,
             const MaterialModelUvOverrideMap& materialModelUvMap
         )
             : m_modelLod(&modelLod)
             , m_modelLodMeshIndex(modelLodMeshIndex)
+            , m_meshInfoIndex(meshInfoIndex)
             , m_objectSrg(objectSrg)
             , m_material(materialOverride)
             , m_materialModelUvMap(materialModelUvMap)
@@ -439,6 +441,16 @@ namespace AZ
                     if (index.IsValid())
                     {
                         drawSrg->SetConstant(index, aznumeric_cast<uint32_t>(m_modelLodMeshIndex));
+                    }
+
+                    if (m_meshInfoIndex >= 0)
+                    {
+                        AZ::Name meshInfoNameIdx("m_meshInfoIndex");
+                        auto meshInfoConstIdx = drawSrg->FindShaderInputConstantIndex(meshInfoNameIdx);
+                        if (meshInfoConstIdx.IsValid())
+                        {
+                            drawSrg->SetConstant(meshInfoConstIdx, aznumeric_cast<uint32_t>(m_meshInfoIndex));
+                        }
                     }
 
                     // TODO: Does it make sense to call Compile() in the case where both SetConstant() calls above fail?
