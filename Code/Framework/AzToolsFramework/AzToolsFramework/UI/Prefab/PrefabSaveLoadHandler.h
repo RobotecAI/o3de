@@ -11,6 +11,8 @@
 #include <AzToolsFramework/AzToolsFrameworkAPI.h>
 
 #include <AzCore/UserSettings/UserSettings.h>
+#include <AzCore/std/containers/vector.h>
+#include <AzCore/std/string/string.h>
 namespace AZ
 {
     class Vector3;
@@ -118,6 +120,12 @@ namespace AzToolsFramework
                 Retry,
                 Cancel
             };
+
+            //! Suffixes the Editor accepts as Prefab sources: ".prefab" plus every registered alternate format.
+            static AZStd::vector<AZStd::string> GetPrefabFileExtensions();
+
+            //! Whether the path names a Prefab in any of those formats.
+            static bool IsPrefabFilePath(AZStd::string_view filePath);
 
             static void GenerateSuggestedFilenameFromEntities(const EntityIdList& entities, AZStd::string& outName);
             static bool AppendEntityToSuggestedFilename(AZStd::string& filename, AZ::EntityId entityId);
