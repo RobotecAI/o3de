@@ -109,7 +109,7 @@ jobs:
           ccache_options: |
             cache_dir=${{ github.workspace }}/.ccache
             hash_dir=false
-            max_size=10G
+            max_size=5G
 
       - name: Check for rerun
         id: check-rerun
@@ -123,29 +123,31 @@ jobs:
             echo "This is the first run attempt"
           fi
 
+      - name: Download current run artifact
+        # Non-profile builds: get the artifact uploaded by the previous job of this run
+        # Profile reruns: get the artifact uploaded by an earlier attempt of this run
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        id: download-current-run
+        if: ${{ inputs.type != 'profile' || steps.check-rerun.outputs.is_rerun == 'true' }}
+        continue-on-error: true
+        with:
+          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
+
       - name: Download last run artifact
         # Profile builds: get the artifact from the last run of the target branch of a PR or the current branch
-        # Skip if this is a rerun to either freshly build or get artifacts from existing run
+        # Runs on reruns only if no earlier attempt uploaded an artifact
+        # Skip if last_artifact is not set, to build without a cache
         uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27
         id: download-last-run
-        if: ${{ inputs.type == 'profile' && inputs.last_artifact && steps.check-rerun.outputs.is_rerun != 'true' }}
+        if: ${{ inputs.type == 'profile' && inputs.last_artifact && steps.download-current-run.outcome != 'success' }}
         with:
           workflow_search: true
-          workflow_conclusion: ""
           branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+          workflow_conclusion: ""
           search_artifacts: true
           check_artifacts: true
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
           if_no_artifact_found: "ignore"
-
-      - name: Download current run artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        id: download-current-run
-        if: ${{ inputs.type != 'profile' }}
-        continue-on-error: true
-        with:
-          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          skip-decompress: true
 
       - name: Extract artifact
         # Extract the tar file from the artifact
@@ -154,7 +156,7 @@ jobs:
         run: |
           if ! tar -xvpf "${{ github.workspace }}/cache.tar"; then
             echo "::warning::Ignoring invalid cache archive"
-            rm -rf .ccache .o3de/python/downloaded_packages 3rdParty/downloaded_packages AutomatedTesting/Cache
+            rm -rf .ccache
           fi
           rm -f "${{ github.workspace }}/cache.tar"
           ccache --zero-stats --cleanup
@@ -232,7 +234,7 @@ jobs:
 
       - name: Compress build artifacts
         # Compress with posix format to preserve permissions and timestamps at nanosecond precision
-        # Skip compression and upload if the type is a test to reduce dirty build artifacts from previous runs
+        # Only profile builds upload the cache; later jobs in the run reuse it
         id: compress-build
         if: ${{ !cancelled() && inputs.type == 'profile' }}
         continue-on-error: true
