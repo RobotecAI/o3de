@@ -84,7 +84,7 @@ jobs:
           remove-docker-images: true
 
       - name: Checkout repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           show-progress: false
 
@@ -123,13 +123,12 @@ jobs:
             echo "This is the first run attempt"
           fi
 
-      - name: Get last run
-        # Get the last runid of the target branch of a PR or the current branch
+      - name: Download last run artifact
+        # Profile builds: get the artifact from the last run of the target branch of a PR or the current branch
         # Skip if this is a rerun to either freshly build or get artifacts from existing run
-        uses: dawidd6/action-download-artifact@07ab29fd4a977ae4d2b275087cf67563dfdf0295 # v9
-        id: last-run-id
-        if: ${{ inputs.last_artifact && steps.check-rerun.outputs.is_rerun != 'true' }}
-        continue-on-error: true
+        uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27
+        id: download-last-run
+        if: ${{ inputs.type == 'profile' && inputs.last_artifact && steps.check-rerun.outputs.is_rerun != 'true' }}
         with:
           workflow_search: true
           workflow_conclusion: ""
@@ -137,31 +136,21 @@ jobs:
           search_artifacts: true
           check_artifacts: true
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          dry_run: true
+          if_no_artifact_found: "ignore"
 
-      - name: Set artifact run ID
-        # Set the run ID of the artifact to be used for the download step
-        id: set-artifact-run-id
-        if: steps.last-run-id.outcome == 'success' && inputs.last_artifact == true
-        run: |
-          runId=${{ fromJSON(steps.last-run-id.outputs.artifacts)[0].workflow_run.id }}
-          echo "artifact_run_id=$runId" >> $GITHUB_OUTPUT
-          echo "Using artifacts from previous run: $runId"
-
-      - name: Restore artifact cache
-        # Restore the artifact from the "Get last run" step or from the current run
-        id: restore-artifact-cache
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+      - name: Download current run artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        id: download-current-run
+        if: ${{ inputs.type != 'profile' }}
         continue-on-error: true
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ steps.set-artifact-run-id.outputs.artifact_run_id || github.run_id }}
+          skip-decompress: true
 
       - name: Extract artifact
         # Extract the tar file from the artifact
         id: extract-artifact
-        if: ${{ steps.restore-artifact-cache.outcome == 'success' }}
+        if: ${{ steps.download-last-run.outputs.found_artifact == 'true' || steps.download-current-run.outcome == 'success' }}
         run: |
           if ! tar -xvpf "${{ github.workspace }}/cache.tar"; then
             echo "::warning::Ignoring invalid cache archive"
@@ -205,7 +194,6 @@ jobs:
 
       - name: Configure environment
         # Install dependencies. The desktop packages are for tests and assetprocessor
-        continue-on-error: true
         run: |
           echo "Installing dependencies"
           pushd ./scripts/build/build_node/Platform/Linux
@@ -232,7 +220,6 @@ jobs:
         env:
           CMAKE_C_COMPILER_LAUNCHER: ccache
           CMAKE_CXX_COMPILER_LAUNCHER: ccache
-          LY_3RDPARTY_PATH: ${{ github.workspace }}/3rdParty
           LY_PACKAGE_SERVER_URLS: "https://d1gg6ket0m44ly.cloudfront.net;https://d3t6xeg4fgfoum.cloudfront.net"
         run: |
           export EXTRA_CMAKE_OPTIONS="-DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX"
@@ -243,31 +230,23 @@ jobs:
           fi
           "${xvfb_command[@]}" python/python.sh -u scripts/build/ci_build.py --platform ${{ inputs.platform }} --type ${{ inputs.type }}
 
-      - name: Compress artifacts
+      - name: Compress build artifacts
         # Compress with posix format to preserve permissions and timestamps at nanosecond precision
         # Skip compression and upload if the type is a test to reduce dirty build artifacts from previous runs
-        id: compress-artifacts
-        if: ${{ (steps.extract-artifact.outcome == 'success' || steps.extract-artifact.outcome == 'skipped') && !cancelled() && !contains(inputs.type, 'test') }}
+        id: compress-build
+        if: ${{ !cancelled() && inputs.type == 'profile' }}
         continue-on-error: true
         run: |
-          if [[ "${{ steps.build.outcome }}" != "success" ]]; then
-            echo "::warning::Build step did not succeed. Clearing AutomatedTesting/Cache"
-            rm -rf AutomatedTesting/Cache
-          fi
-          mkdir -p .ccache .o3de/python/downloaded_packages 3rdParty/downloaded_packages AutomatedTesting/Cache
-          tar --format=posix -cvpf ${{ github.workspace }}/cache.tar \
-            .ccache \
-            .o3de/python/downloaded_packages \
-            3rdParty/downloaded_packages \
-            AutomatedTesting/Cache
+          mkdir -p .ccache
+          tar --format=posix -cvpf ${{ github.workspace }}/cache.tar .ccache
 
       - name: Save artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: ${{ steps.compress-artifacts.outcome == 'success' && !cancelled() && !contains(inputs.type, 'test') }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() && steps.compress-build.outcome == 'success' }}
         continue-on-error: true
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          compression-level: 1
+          compression-level: 0
           overwrite: true
           path: |
             ${{ github.workspace }}/cache.tar
