@@ -1,0 +1,79 @@
+#
+# Copyright (c) Contributors to the Open 3D Engine Project.
+# For complete copyright and license terms please see the LICENSE at the root of this distribution.
+#
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+#
+#
+
+name: Restore artifact
+description: Download a tar archive artifact and extract it into the workspace
+
+inputs:
+  name:
+    description: Name of the artifact
+    required: true
+  path:
+    description: Paths stored in the archive, removed if the archive fails to extract
+    required: true
+  current-run:
+    description: Get the artifact from the current workflow run (previous jobs or earlier attempts)
+    required: false
+    default: "true"
+  last-run:
+    description: >
+      Get the artifact from the last run of the target branch of a PR or the current branch,
+      if it was not found in the current run
+    required: false
+    default: "false"
+
+outputs:
+  restored:
+    description: "'true' if the artifact was downloaded and extracted"
+    value: ${{ steps.extract.outputs.restored }}
+
+# Note: All 3P Github Actions use the commit hash for security reasons
+# Avoid using the tag version, which is vulnerable to supply chain attacks
+
+runs:
+  using: composite
+  steps:
+    - name: Download current run artifact
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      id: download-current-run
+      if: ${{ inputs.current-run == 'true' }}
+      continue-on-error: true
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ runner.temp }}/${{ inputs.name }}
+
+    - name: Download last run artifact
+      uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27
+      id: download-last-run
+      if: ${{ inputs.last-run == 'true' && steps.download-current-run.outcome != 'success' }}
+      with:
+        workflow_search: true
+        workflow_conclusion: ""
+        branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+        search_artifacts: true
+        check_artifacts: true
+        name: ${{ inputs.name }}
+        path: ${{ runner.temp }}/${{ inputs.name }}
+        if_no_artifact_found: "ignore"
+
+    - name: Extract artifact
+      # Extract the tar file from the artifact into the workspace
+      id: extract
+      if: ${{ steps.download-current-run.outcome == 'success' || steps.download-last-run.outputs.found_artifact == 'true' }}
+      shell: bash
+      env:
+        ARCHIVE_DIR: ${{ runner.temp }}/${{ inputs.name }}
+        ARCHIVE_PATHS: ${{ inputs.path }}
+      run: |
+        if tar -xvpf "$ARCHIVE_DIR"/*.tar; then
+          echo "restored=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::Ignoring invalid archive in ${{ inputs.name }}"
+          rm -rf $ARCHIVE_PATHS
+        fi
+        rm -rf "$ARCHIVE_DIR"

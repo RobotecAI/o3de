@@ -111,90 +111,32 @@ jobs:
             hash_dir=false
             max_size=5G
 
-      - name: Check for rerun
-        id: check-rerun
-        run: |
-          # GitHub sets GITHUB_RUN_ATTEMPT to track reruns
-          if [ "$GITHUB_RUN_ATTEMPT" -gt 1 ]; then
-            echo "is_rerun=true" >> $GITHUB_OUTPUT
-            echo "This is rerun attempt #$GITHUB_RUN_ATTEMPT"
-          else
-            echo "is_rerun=false" >> $GITHUB_OUTPUT
-            echo "This is the first run attempt"
-          fi
-
-      - name: Download current run artifact
-        # Non-profile builds: get the artifact uploaded by the previous job of this run
-        # Profile reruns: get the artifact uploaded by an earlier attempt of this run
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        id: download-current-run
-        if: ${{ inputs.type != 'profile' || steps.check-rerun.outputs.is_rerun == 'true' }}
-        continue-on-error: true
+      - name: Restore build cache
+        # Profile builds: get the cache from the last run of the target branch, or from an earlier attempt on reruns
+        # Other builds: get the cache uploaded by the profile job of this run
+        # Skip the last run if last_artifact is not set, to build without a cache
+        id: restore-build
+        uses: ./.github/actions/restore-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
+          path: .ccache
+          current-run: ${{ inputs.type != 'profile' || github.run_attempt > 1 }}
+          last-run: ${{ inputs.type == 'profile' && inputs.last_artifact }}
 
-      - name: Download last run artifact
-        # Profile builds: get the artifact from the last run of the target branch of a PR or the current branch
-        # Runs on reruns only if no earlier attempt uploaded an artifact
-        # Skip if last_artifact is not set, to build without a cache
-        uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27
-        id: download-last-run
-        if: ${{ inputs.type == 'profile' && inputs.last_artifact && steps.download-current-run.outcome != 'success' }}
-        with:
-          workflow_search: true
-          branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
-          workflow_conclusion: ""
-          search_artifacts: true
-          check_artifacts: true
-          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          if_no_artifact_found: "ignore"
+      - name: Reset ccache stats
+        if: ${{ steps.restore-build.outputs.restored == 'true' }}
+        run: ccache --zero-stats --cleanup
 
-      - name: Extract artifact
-        # Extract the tar file from the artifact
-        id: extract-artifact
-        if: ${{ steps.download-last-run.outputs.found_artifact == 'true' || steps.download-current-run.outcome == 'success' }}
-        run: |
-          if ! tar -xvpf "${{ github.workspace }}/cache.tar"; then
-            echo "::warning::Ignoring invalid cache archive"
-            rm -rf .ccache
-          fi
-          rm -f "${{ github.workspace }}/cache.tar"
-          ccache --zero-stats --cleanup
-
-      - name: Download current run assets
-        # Non-profile builds: get the asset cache uploaded by the asset job of this run
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        id: download-current-run-assets
+      - name: Restore asset cache
+        # Asset builds: get the assets from an earlier attempt, otherwise from the last run of the target branch
+        # Test builds: get the assets uploaded by the asset job of this run
+        # Skip the last run if last_artifact is not set, to process assets without a cache
         if: ${{ inputs.type != 'profile' }}
-        continue-on-error: true
+        uses: ./.github/actions/restore-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-assets
-
-      - name: Download last run assets
-        # Asset builds: get the asset cache from the last run of the target branch of a PR or the current branch
-        # Runs only if this run has no asset artifact yet (first attempt, or no earlier attempt uploaded one)
-        # Skip if last_artifact is not set, to process assets without a cache
-        uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27
-        id: download-last-run-assets
-        if: ${{ inputs.type == 'asset_profile' && inputs.last_artifact && steps.download-current-run-assets.outcome != 'success' }}
-        with:
-          workflow_search: true
-          branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
-          search_artifacts: true
-          check_artifacts: true
-          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-assets
-          if_no_artifact_found: "ignore"
-
-      - name: Extract assets
-        # Extract the tar file from the asset artifact
-        id: extract-assets
-        if: ${{ steps.download-current-run-assets.outcome == 'success' || steps.download-last-run-assets.outputs.found_artifact == 'true' }}
-        run: |
-          if ! tar -xvpf "${{ github.workspace }}/assets.tar"; then
-            echo "::warning::Ignoring invalid asset archive"
-            rm -rf AutomatedTesting/Cache
-          fi
-          rm -f "${{ github.workspace }}/assets.tar"
+          path: AutomatedTesting/Cache
+          last-run: ${{ inputs.type == 'asset_profile' && inputs.last_artifact }}
 
       - name: Setup cmake
         # Pin the version of cmake
@@ -267,44 +209,20 @@ jobs:
           fi
           "${xvfb_command[@]}" python/python.sh -u scripts/build/ci_build.py --platform ${{ inputs.platform }} --type ${{ inputs.type }}
 
-      - name: Compress build artifacts
-        # Compress with posix format to preserve permissions and timestamps at nanosecond precision
+      - name: Save build cache
         # Only profile builds upload the cache; later jobs in the run reuse it
-        id: compress-build
         if: ${{ !cancelled() && inputs.type == 'profile' }}
         continue-on-error: true
-        run: |
-          mkdir -p .ccache
-          tar --format=posix -cvpf ${{ github.workspace }}/cache.tar .ccache
-
-      - name: Save artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() && steps.compress-build.outcome == 'success' }}
-        continue-on-error: true
+        uses: ./.github/actions/save-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          compression-level: 0
-          overwrite: true
-          path: |
-            ${{ github.workspace }}/cache.tar
+          path: .ccache
 
-      - name: Compress assets
-        # Compress with posix format to preserve permissions and timestamps at nanosecond precision
+      - name: Save asset cache
         # Only asset builds upload the asset cache; later jobs in the run reuse it
-        id: compress-assets
         if: ${{ !cancelled() && inputs.type == 'asset_profile' }}
         continue-on-error: true
-        run: |
-          mkdir -p AutomatedTesting/Cache
-          tar --format=posix -cvpf ${{ github.workspace }}/assets.tar AutomatedTesting/Cache
-
-      - name: Save assets
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() && steps.compress-assets.outcome == 'success' }}
-        continue-on-error: true
+        uses: ./.github/actions/save-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-assets
-          compression-level: 0
-          overwrite: true
-          path: |
-            ${{ github.workspace }}/assets.tar
+          path: AutomatedTesting/Cache
