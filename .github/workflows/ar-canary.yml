@@ -40,6 +40,7 @@ env:
 jobs:
   #### Android Canary - ubuntu-24.04 ####
   Android-Ubuntu24-Profile:
+    # Builds, processes assets and builds the gradle project in a single job to share setup
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
     uses: ./.github/workflows/android-build.yml
     with:
@@ -47,44 +48,15 @@ jobs:
       config: profile
       image: ubuntu-24.04
       platform: Android
-      type: profile
-      last_artifact: false
-      ndk_version: "28.0.12433566"
-      gradle_version: "8.13"
-      cmake_version: *cmake_version
-
-  Android-Ubuntu24-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
-    needs: Android-Ubuntu24-Profile
-    uses: ./.github/workflows/android-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-24.04
-      platform: Android
-      type: asset_profile
-      last_artifact: false
-      ndk_version: "28.0.12433566"
-      gradle_version: "8.13"
-      cmake_version: *cmake_version
-
-  Android-Ubuntu24-Gradle:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
-    needs: Android-Ubuntu24-Asset
-    uses: ./.github/workflows/android-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-24.04
-      platform: Android
-      type: gradle
-      last_artifact: false
+      type: profile_asset_gradle
+      use_cache: false
       ndk_version: "28.0.12433566"
       gradle_version: "8.13"
       cmake_version: *cmake_version
 
   #### Android Canary - ubuntu-22.04 ####
   Android-Ubuntu22-Profile:
+    # Builds, processes assets and builds the gradle project in a single job to share setup
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
     uses: ./.github/workflows/android-build.yml
     with:
@@ -92,44 +64,15 @@ jobs:
       config: profile
       image: ubuntu-22.04
       platform: Android
-      type: profile
-      last_artifact: false
-      ndk_version: "28.0.12433566"
-      gradle_version: "8.13"
-      cmake_version: *cmake_version
-
-  Android-Ubuntu22-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
-    needs: Android-Ubuntu22-Profile
-    uses: ./.github/workflows/android-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Android
-      type: asset_profile
-      last_artifact: false
-      ndk_version: "28.0.12433566"
-      gradle_version: "8.13"
-      cmake_version: *cmake_version
-
-  Android-Ubuntu22-Gradle:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
-    needs: Android-Ubuntu22-Asset
-    uses: ./.github/workflows/android-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Android
-      type: gradle
-      last_artifact: false
+      type: profile_asset_gradle
+      use_cache: false
       ndk_version: "28.0.12433566"
       gradle_version: "8.13"
       cmake_version: *cmake_version
 
   #### Linux Canary - ubuntu-24.04 ####
   Linux-Ubuntu24-Clang19-Profile:
+    # Builds, processes assets and runs tests in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
     uses: ./.github/workflows/linux-build.yml
     with:
@@ -137,38 +80,8 @@ jobs:
       config: profile
       image: ubuntu-24.04
       platform: Linux
-      type: profile
-      last_artifact: false
-      clang_version: "19"
-      gcc_version: "14"
-      cmake_version: *cmake_version
-
-  Linux-Ubuntu24-Clang19-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
-    needs: Linux-Ubuntu24-Clang19-Profile
-    uses: ./.github/workflows/linux-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-24.04
-      platform: Linux
-      type: asset_profile
-      last_artifact: false
-      clang_version: "19"
-      gcc_version: "14"
-      cmake_version: *cmake_version
-
-  Linux-Ubuntu24-Clang19-Test:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
-    needs: Linux-Ubuntu24-Clang19-Asset
-    uses: ./.github/workflows/linux-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-24.04
-      platform: Linux
-      type: test_profile
-      last_artifact: false
+      type: profile_asset_test
+      use_cache: false
       desktop: true
       clang_version: "19"
       gcc_version: "14"
@@ -176,6 +89,7 @@ jobs:
 
   #### Linux Canary - ubuntu-22.04 ####
   Linux-Ubuntu22-Clang19-Profile:
+    # Builds, processes assets and runs tests in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
     uses: ./.github/workflows/linux-build.yml
     with:
@@ -183,38 +97,8 @@ jobs:
       config: profile
       image: ubuntu-22.04
       platform: Linux
-      type: profile
-      last_artifact: false
-      clang_version: "19"
-      gcc_version: "14"
-      cmake_version: *cmake_version
-
-  Linux-Ubuntu22-Clang19-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
-    needs: Linux-Ubuntu22-Clang19-Profile
-    uses: ./.github/workflows/linux-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Linux
-      type: asset_profile
-      last_artifact: false
-      clang_version: "19"
-      gcc_version: "14"
-      cmake_version: *cmake_version
-
-  Linux-Ubuntu22-Clang19-Test:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
-    needs: Linux-Ubuntu22-Clang19-Asset
-    uses: ./.github/workflows/linux-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Linux
-      type: test_profile
-      last_artifact: false
+      type: profile_asset_test
+      use_cache: false
       desktop: true
       clang_version: "19"
       gcc_version: "14"
@@ -222,94 +106,55 @@ jobs:
 
   #### Mac Canary - macos-15 Apple Silicon ####
   Mac-macOS15-Profile:
+    # Builds and processes assets in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.mac_build }}
     uses: ./.github/workflows/mac-build.yml
     with:
       config: profile
       image: macos-15
-      type: profile
-      last_artifact: false
-      cmake_version: *cmake_version
-
-  Mac-macOS15-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mac_build }}
-    needs: Mac-macOS15-Profile
-    uses: ./.github/workflows/mac-build.yml
-    with:
-      config: profile
-      image: macos-15
-      type: asset_profile
-      last_artifact: false
+      type: profile_asset
+      use_cache: false
       cmake_version: *cmake_version
 
   #### Mac Canary - macos-15-intel ####
   Mac-macOS15Intel-Profile:
+    # Builds and processes assets in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.mac_build }}
     uses: ./.github/workflows/mac-build.yml
     with:
       config: profile
       image: macos-15-intel
-      type: profile
-      last_artifact: false
-      cmake_version: *cmake_version
-
-  Mac-macOS15Intel-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mac_build }}
-    needs: Mac-macOS15Intel-Profile
-    uses: ./.github/workflows/mac-build.yml
-    with:
-      config: profile
-      image: macos-15-intel
-      type: asset_profile
-      last_artifact: false
+      type: profile_asset
+      use_cache: false
       cmake_version: *cmake_version
 
 #### iOS Canary - macos-15 Apple Silicon ####
   iOS-macOS15-Profile:
+    # Builds and processes assets in a single job to share setup
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.ios_build }}
     uses: ./.github/workflows/ios-build.yml
     with:
       config: profile
       image: macos-15
-      type: profile
-      last_artifact: false
-      cmake_version: *cmake_version
-
-  iOS-macOS15-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.ios_build }}
-    needs: iOS-macOS15-Profile
-    uses: ./.github/workflows/ios-build.yml
-    with:
-      config: profile
-      image: macos-15
-      type: asset_profile
-      last_artifact: false
+      type: profile_asset
+      use_cache: false
       cmake_version: *cmake_version
 
   #### iOS Canary - macos-15-intel ####
   iOS-macOS15Intel-Profile:
+    # Builds and processes assets in a single job to share setup
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.ios_build }}
     uses: ./.github/workflows/ios-build.yml
     with:
       config: profile
       image: macos-15-intel
-      type: profile
-      last_artifact: false
-      cmake_version: *cmake_version
-
-  iOS-macOS15Intel-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.ios_build }}
-    needs: iOS-macOS15Intel-Profile
-    uses: ./.github/workflows/ios-build.yml
-    with:
-      config: profile
-      image: macos-15-intel
-      type: asset_profile
-      last_artifact: false
+      type: profile_asset
+      use_cache: false
       cmake_version: *cmake_version
 
   #### Windows Canary - use latest installed v143 toolset on each runner image ####
   Windows-2025-Profile:
+    # Builds, processes assets and runs tests in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
     uses: ./.github/workflows/windows-build.yml
     with:
@@ -317,36 +162,8 @@ jobs:
       config: profile
       image: windows-2025
       platform: Windows
-      type: profile
-      last_artifact: false
-      msvc_platform_toolset: "v143"
-      cmake_version: *cmake_version
-
-  Windows-2025-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
-    needs: Windows-2025-Profile
-    uses: ./.github/workflows/windows-build.yml
-    with:
-      compiler: msvc
-      config: profile
-      image: windows-2025
-      platform: Windows
-      type: asset_profile
-      last_artifact: false
-      msvc_platform_toolset: "v143"
-      cmake_version: *cmake_version
-
-  Windows-2025-Test:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
-    needs: Windows-2025-Asset
-    uses: ./.github/workflows/windows-build.yml
-    with:
-      compiler: msvc
-      config: profile
-      image: windows-2025
-      platform: Windows
-      type: test_cpu_profile
-      last_artifact: false
+      type: profile_asset_test
+      use_cache: false
       msvc_platform_toolset: "v143"
       cmake_version: *cmake_version
 
@@ -359,11 +176,12 @@ jobs:
       image: windows-2025
       platform: Windows
       type: release
-      last_artifact: false
+      use_cache: false
       msvc_platform_toolset: "v143"
       cmake_version: *cmake_version
 
   Windows-2022-Profile:
+    # Builds, processes assets and runs tests in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
     uses: ./.github/workflows/windows-build.yml
     with:
@@ -371,35 +189,8 @@ jobs:
       config: profile
       image: windows-2022
       platform: Windows
-      type: profile
-      last_artifact: false
+      type: profile_asset_test
+      use_cache: false
       msvc_platform_toolset: "v143"
       cmake_version: *cmake_version
 
-  Windows-2022-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
-    needs: Windows-2022-Profile
-    uses: ./.github/workflows/windows-build.yml
-    with:
-      compiler: msvc
-      config: profile
-      image: windows-2022
-      platform: Windows
-      type: asset_profile
-      last_artifact: false
-      msvc_platform_toolset: "v143"
-      cmake_version: *cmake_version
-
-  Windows-2022-Test:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
-    needs: Windows-2022-Asset
-    uses: ./.github/workflows/windows-build.yml
-    with:
-      compiler: msvc
-      config: profile
-      image: windows-2022
-      platform: Windows
-      type: test_cpu_profile
-      last_artifact: false
-      msvc_platform_toolset: "v143"
-      cmake_version: *cmake_version

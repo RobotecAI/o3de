@@ -60,8 +60,8 @@ jobs:
   # - config: The configuration to use (profile, release). This is defined by presets in ../scripts/build/Platform/<os>/build_config.json
   # - image: The image to use (windows-2022, ubuntu-22.04, macos-15, macos-15-intel). The images are defined from runners images repo: https://github.com/actions/runner-images
   # - platform: The platform to use (Windows, Linux, Mac, Android, iOS)
-  # - type: The type of build to use (profile, asset_profile, test_profile, test_cpu_profile, release)
-  # - last_artifact: Whether to use the artifact from the last run, from the target branch if it's a pull request or its own branch if it's a push
+  # - type: The type of build to use (profile, asset_profile, test_profile, test_cpu_profile, profile_asset, profile_asset_test, profile_asset_gradle, release)
+  # - use_cache: Whether to restore the build and asset caches from this run or the last run of the target branch (PR) or own branch (push), otherwise start from a clean state
   # - desktop: Whether to use the desktop environment for tests (Linux only)
   # - msvc_toolset_version: MSVC toolset version to install (Windows only)
   # - msvc_platform_toolset: MSVC platform toolset name, e.g. v143 (Windows only)
@@ -73,6 +73,7 @@ jobs:
 
 #### Android Build ####
   Android-Profile:
+    # Builds, processes assets and builds the gradle project in a single job to share setup
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
     uses: ./.github/workflows/android-build.yml
     with:
@@ -80,62 +81,26 @@ jobs:
       config: profile
       image: ubuntu-22.04
       platform: Android
-      type: profile
-      last_artifact: ${{ !inputs.CLEAN_ARTIFACTS }}
-      ndk_version: *ndk_version
-      gradle_version: *gradle_version
-      cmake_version: *cmake_version
-
-  Android-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
-    needs: Android-Profile
-    uses: ./.github/workflows/android-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Android
-      type: asset_profile
-      ndk_version: *ndk_version
-      gradle_version: *gradle_version
-      cmake_version: *cmake_version
-
-  Android-Gradle:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.android_build }}
-    needs: Android-Asset
-    uses: ./.github/workflows/android-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Android
-      type: gradle
+      type: profile_asset_gradle
+      use_cache: ${{ !inputs.CLEAN_ARTIFACTS }}
       ndk_version: *ndk_version
       gradle_version: *gradle_version
       cmake_version: *cmake_version
 
 #### iOS Build ####
   iOS-Profile:
+    # Builds and processes assets in a single job to share setup
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.ios_build }}
     uses: ./.github/workflows/ios-build.yml
     with:
       config: profile
-      type: profile
-      last_artifact: ${{ !inputs.CLEAN_ARTIFACTS }}
-      cmake_version: *cmake_version
-
-  iOS-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.ios_build }}
-    needs: iOS-Profile
-    uses: ./.github/workflows/ios-build.yml
-    with:
-      config: profile
-      type: asset_profile
+      type: profile_asset
+      use_cache: ${{ !inputs.CLEAN_ARTIFACTS }}
       cmake_version: *cmake_version
 
   iOS-Test:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.ios_build }}
-    needs: iOS-Asset
+    needs: iOS-Profile
     uses: ./.github/workflows/ios-build.yml
     with:
       config: profile
@@ -144,6 +109,7 @@ jobs:
 
 #### Linux Build ####
   Linux-Profile:
+    # Builds, processes assets and runs tests in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
     uses: ./.github/workflows/linux-build.yml
     with:
@@ -151,36 +117,8 @@ jobs:
       config: profile
       image: ubuntu-22.04
       platform: Linux
-      type: profile
-      last_artifact: ${{ !inputs.CLEAN_ARTIFACTS }}
-      clang_version: "18"
-      gcc_version: "13"
-      cmake_version: *cmake_version
-
-  Linux-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
-    needs: Linux-Profile
-    uses: ./.github/workflows/linux-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Linux
-      type: asset_profile
-      clang_version: "18"
-      gcc_version: "13"
-      cmake_version: *cmake_version
-
-  Linux-Test:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux_build }}
-    needs: Linux-Asset
-    uses: ./.github/workflows/linux-build.yml
-    with:
-      compiler: clang
-      config: profile
-      image: ubuntu-22.04
-      platform: Linux
-      type: test_profile
+      type: profile_asset_test
+      use_cache: ${{ !inputs.CLEAN_ARTIFACTS }}
       desktop: true
       clang_version: "18"
       gcc_version: "13"
@@ -188,34 +126,18 @@ jobs:
 
 #### Mac Build ####
   Mac-Profile:
+    # Builds and processes assets in a single job to share setup and the build folder, tests run on manual dispatch only
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.mac_build }}
     uses: ./.github/workflows/mac-build.yml
     with:
       config: profile
-      type: profile
-      last_artifact: ${{ !inputs.CLEAN_ARTIFACTS }}
-      cmake_version: *cmake_version
-
-  Mac-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mac_build }}
-    needs: Mac-Profile
-    uses: ./.github/workflows/mac-build.yml
-    with:
-      config: profile
-      type: asset_profile
-      cmake_version: *cmake_version
-
-  Mac-Test:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mac_build }}
-    needs: Mac-Asset
-    uses: ./.github/workflows/mac-build.yml
-    with:
-      config: profile
-      type: test_profile
+      type: ${{ github.event_name == 'workflow_dispatch' && 'profile_asset_test' || 'profile_asset' }}
+      use_cache: ${{ !inputs.CLEAN_ARTIFACTS }}
       cmake_version: *cmake_version
 
 #### Windows Build ####
   Windows-Profile:
+    # Builds, processes assets and runs tests in a single job to share setup and the build folder
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
     uses: ./.github/workflows/windows-build.yml
     with:
@@ -223,36 +145,8 @@ jobs:
       config: profile
       image: windows-2022
       platform: Windows
-      type: profile
-      last_artifact: ${{ !inputs.CLEAN_ARTIFACTS }} # If CLEAN_ARTIFACTS is false, then this returns true
-      msvc_toolset_version: *msvc_toolset_version
-      msvc_platform_toolset: *msvc_platform_toolset
-      cmake_version: *cmake_version
-
-  Windows-Asset:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
-    needs: Windows-Profile
-    uses: ./.github/workflows/windows-build.yml
-    with:
-      compiler: msvc
-      config: profile
-      image: windows-2022
-      platform: Windows
-      type: asset_profile
-      msvc_toolset_version: *msvc_toolset_version
-      msvc_platform_toolset: *msvc_platform_toolset
-      cmake_version: *cmake_version
-
-  Windows-Test:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build }}
-    needs: Windows-Asset
-    uses: ./.github/workflows/windows-build.yml
-    with:
-      compiler: msvc
-      config: profile
-      image: windows-2022
-      platform: Windows
-      type: test_cpu_profile
+      type: profile_asset_test
+      use_cache: ${{ !inputs.CLEAN_ARTIFACTS }} # If CLEAN_ARTIFACTS is false, then this returns true
       msvc_toolset_version: *msvc_toolset_version
       msvc_platform_toolset: *msvc_platform_toolset
       cmake_version: *cmake_version
@@ -266,7 +160,7 @@ jobs:
       image: windows-2022
       platform: Windows
       type: release
-      last_artifact: ${{ !inputs.CLEAN_ARTIFACTS }}
+      use_cache: ${{ !inputs.CLEAN_ARTIFACTS }}
       msvc_toolset_version: *msvc_toolset_version
       msvc_platform_toolset: *msvc_platform_toolset
       cmake_version: *cmake_version

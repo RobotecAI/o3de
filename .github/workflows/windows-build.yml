@@ -11,36 +11,52 @@ name: Windows Build
 # These jobs are to be triggered by ar.yml
 
 on:
-  workflow_dispatch:
   workflow_call:
-    inputs:
+    inputs: &inputs
       compiler:
-        required: true
+        description: Compiler to use
+        required: false
         type: string
+        default: msvc
       config:
-        required: true
+        description: Configuration preset from scripts/build/Platform/Windows/build_config.json (profile, release)
+        required: false
         type: string
+        default: profile
       image:
-        required: true
+        description: Runner image (windows-2022, windows-2025)
+        required: false
         type: string
+        default: windows-2022
       platform:
-        required: true
+        description: Platform to build
+        required: false
         type: string
+        default: Windows
       type:
-        required: true
+        description: Build type (profile, asset_profile, test_cpu_profile, profile_asset_test, release)
+        required: false
         type: string
-      last_artifact:
+        default: profile_asset_test
+      use_cache:
+        description: Restore the build and asset caches, otherwise start from a clean state
         required: false
         type: boolean
+        default: true
       msvc_toolset_version:
+        description: MSVC toolset version to install (e.g. 14.44), uses the latest installed toolset if empty
         required: false
         type: string
       msvc_platform_toolset:
+        description: MSVC platform toolset name (e.g. v143), uses the generator default if empty
         required: false
         type: string
       cmake_version:
+        description: CMake version to install, uses the runner version if empty
         required: false
         type: string
+  workflow_dispatch:
+    inputs: *inputs
 
 run-name: ${{ inputs.platform }} - ${{ inputs.type }}
 
@@ -48,6 +64,7 @@ run-name: ${{ inputs.platform }} - ${{ inputs.type }}
 env:
   CMAKE_C_COMPILER_LAUNCHER: C:\ProgramData\Chocolatey\bin\ccache.exe
   CMAKE_CXX_COMPILER_LAUNCHER: C:\ProgramData\Chocolatey\bin\ccache.exe
+  LY_PACKAGE_SERVER_URLS: "https://d1gg6ket0m44ly.cloudfront.net;https://d3t6xeg4fgfoum.cloudfront.net"
 
 # Note: All 3P Github Actions use the commit hash for security reasons
 # Avoid using the tag version, which is vulnerable to supply chain attacks
@@ -56,9 +73,16 @@ jobs:
   Build:
     runs-on: ${{ inputs.image }}
 
+    env:
+      # Phases run by this job; profile_asset_test runs all of them in one job to share setup and the build folder
+      BUILD_PHASE: ${{ inputs.type == 'profile' || inputs.type == 'release' || inputs.type == 'profile_asset_test' }}
+      ASSET_PHASE: ${{ inputs.type == 'asset_profile' || inputs.type == 'profile_asset_test' }}
+      TEST_PHASE: ${{ inputs.type == 'test_cpu_profile' || inputs.type == 'profile_asset_test' }}
+      BUILD_TYPE: ${{ inputs.type == 'profile_asset_test' && 'profile' || inputs.type }}
+
     steps:
       - name: Checkout repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           show-progress: false
 
@@ -112,73 +136,35 @@ jobs:
             max_size=10G
             temporary_dir=${{ env.DEV_DRIVE }}\temp
 
-      - name: Check for rerun
-        id: check-rerun
-        run: |
-          # GitHub sets GITHUB_RUN_ATTEMPT to track reruns
-          if ($env:GITHUB_RUN_ATTEMPT -gt 1) {
-            echo "is_rerun=true" >> $env:GITHUB_OUTPUT
-            echo "This is rerun attempt #$env:GITHUB_RUN_ATTEMPT"
-          } else {
-            echo "is_rerun=false" >> $env:GITHUB_OUTPUT
-            echo "This is the first run attempt"
-          }
-
-      - name: Get last run
-        # Get the last runid of the target branch of a PR or the current branch
-        # Skip if this is a rerun to either freshly build or get artifacts from existing run
-        uses: dawidd6/action-download-artifact@07ab29fd4a977ae4d2b275087cf67563dfdf0295 # v9
-        id: last-run-id
-        if: ${{ inputs.last_artifact && steps.check-rerun.outputs.is_rerun != 'true' }}
-        continue-on-error: true
-        with:
-          workflow_search: true
-          workflow_conclusion: ""
-          branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
-          search_artifacts: true
-          check_artifacts: true
-          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          dry_run: true
-
-      - name: Set artifact run ID
-        # Set the run ID of the artifact to be used for the download step
-        id: set-artifact-run-id
-        if: steps.last-run-id.outcome == 'success' && inputs.last_artifact == true
-        run: |
-          $runId = ${{ fromJSON(steps.last-run-id.outputs.artifacts)[0].workflow_run.id }}
-          echo "artifact_run_id=$runId" >> $env:GITHUB_OUTPUT
-          echo "Using artifacts from previous run: $runId"
-
-      - name: Restore artifact cache
-        # Restore the artifact from the "Get last run" step or from the current run
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
-        id: restore-artifact-cache
-        continue-on-error: true
+      - name: Restore build cache
+        # Get the cache from an earlier job or attempt of this run, otherwise from the latest run of the target branch
+        # Skipped if use_cache is not set, to build from a clean state
+        if: ${{ inputs.use_cache }}
+        id: restore-build
+        uses: ./.github/actions/restore-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: ${{ env.DEV_DRIVE_WORKSPACE }}
-          run-id: ${{ steps.set-artifact-run-id.outputs.artifact_run_id || github.run_id }}
+          path: .ccache
+          working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
 
-      - name: Extract artifact
-        # Extract the tar file from the artifact
-        id: extract-artifact
-        if: ${{ steps.restore-artifact-cache.outcome == 'success' }}
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        run: |
-          $PSNativeCommandUseErrorActionPreference = $false
-          tar -xvpf ${{ env.DEV_DRIVE_WORKSPACE }}\cache.tar
-          if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Ignoring invalid cache archive"
-            Remove-Item -Recurse -Force .ccache, .o3de\python\downloaded_packages, 3rdParty\downloaded_packages, AutomatedTesting\Cache -ErrorAction SilentlyContinue
-          }
-          Remove-Item ${{ env.DEV_DRIVE_WORKSPACE }}\cache.tar -Force -ErrorAction SilentlyContinue
-          ccache --zero-stats --cleanup
+      - name: Reset ccache stats
+        if: ${{ steps.restore-build.outputs.restored == 'true' }}
+        run: ccache --zero-stats --cleanup
+
+      - name: Restore asset cache
+        # Get the assets from an earlier job or attempt of this run, otherwise from the latest run of the target branch
+        # Skipped if use_cache is not set, to process assets from a clean state
+        if: ${{ inputs.use_cache && (env.ASSET_PHASE == 'true' || env.TEST_PHASE == 'true') }}
+        uses: ./.github/actions/restore-artifact
+        with:
+          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-assets
+          path: AutomatedTesting/Cache
+          working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
 
       - name: Setup cmake
         # Pin the version of cmake
         if: ${{ inputs.cmake_version }}
-        uses: lukka/get-cmake@f176ccd3f28bda569c43aae4894f06b2435a3375 # v4.2.3
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
         with:
           cmakeVersion: "${{ inputs.cmake_version }}"
 
@@ -232,47 +218,56 @@ jobs:
           echo "Installing additional python dependencies..."
           python\pip.sh install tempfile2 PyGithub
 
-      - name: Build ${{ inputs.type }}
+      - name: Configure build environment
+        # Set 3rdParty and temp folders to the workspace drive as the boot drive is slow
+        run: |
+          echo "LY_3RDPARTY_PATH=${{ env.DEV_DRIVE_WORKSPACE }}\3rdParty" >> $env:GITHUB_ENV
+          echo "TEMP=${{ env.DEV_DRIVE }}\temp" >> $env:GITHUB_ENV
+          echo "TMP=${{ env.DEV_DRIVE }}\temp" >> $env:GITHUB_ENV
+
+      - name: Build ${{ env.BUILD_TYPE }}
         # Builds with presets in ../scripts/build/Platform/Windows/build_config.json
-        # Set temp folders to the workspace drive as the boot drive is slow
-        id: build
-        working-directory: "${{ env.DEV_DRIVE_WORKSPACE }}"
+        id: build-profile
+        if: ${{ env.BUILD_PHASE == 'true' }}
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         timeout-minutes: 330
         run: |
-          $env:LY_3RDPARTY_PATH = "${{ env.DEV_DRIVE_WORKSPACE }}\3rdParty"
-          $env:LY_PACKAGE_SERVER_URLS = "https://d1gg6ket0m44ly.cloudfront.net;https://d3t6xeg4fgfoum.cloudfront.net"
-          $env:TEMP = "${{ env.DEV_DRIVE }}\temp"
-          $env:TMP = "${{ env.DEV_DRIVE }}\temp"
-          python\python.cmd -u scripts\build\ci_build.py --platform ${{ inputs.platform }} --type ${{ inputs.type }}
+          python\python.cmd -u scripts\build\ci_build.py --platform ${{ inputs.platform }} --type ${{ env.BUILD_TYPE }}
 
-      - name: Compress artifacts
-        # Compress with posix format to preserve permissions and timestamps at nanosecond precision
-        # Skip compression and upload if the type is a test to reduce dirty build artifacts from previous runs
-        id: compress-artifacts
-        if: ${{ (steps.extract-artifact.outcome == 'success' || steps.extract-artifact.outcome == 'skipped') && !cancelled() && !contains(inputs.type, 'test') }}
+      - name: Save build cache
+        # Only the build phase uploads the cache; later jobs in the run reuse it
+        # Saved right after the build, so a rerun of a later failing phase starts with a warm cache
+        if: ${{ !cancelled() && steps.build-profile.outcome != 'skipped' }}
         continue-on-error: true
-        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-        run: |
-          if ("${{ steps.build.outcome }}" -ne "success") {
-            Write-Output "::warning::Build step did not succeed. Clearing AutomatedTesting/Cache"
-            if (Test-Path AutomatedTesting\Cache) {
-              Remove-Item -Path AutomatedTesting\Cache -Recurse -Force -ErrorAction Stop
-            }
-          }
-          New-Item -ItemType Directory -Force .ccache, .o3de\python\downloaded_packages, 3rdParty\downloaded_packages, AutomatedTesting\Cache | Out-Null
-          tar --format=posix -cvpf ${{ env.DEV_DRIVE_WORKSPACE }}\cache.tar `
-            .ccache `
-            .o3de\python\downloaded_packages `
-            3rdParty\downloaded_packages `
-            AutomatedTesting\Cache
-
-      - name: Save artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: ${{ steps.compress-artifacts.outcome == 'success' && !cancelled() && !contains(inputs.type, 'test') }}
-        continue-on-error: true
+        uses: ./.github/actions/save-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          compression-level: 1
-          overwrite: true
-          path: |
-            ${{ env.DEV_DRIVE_WORKSPACE }}\cache.tar
+          path: .ccache
+          working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+
+      - name: Process assets
+        # Reuses the build folder of the build phase when run in the same job, otherwise builds AssetProcessorBatch
+        id: build-assets
+        if: ${{ env.ASSET_PHASE == 'true' }}
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        timeout-minutes: 330
+        run: |
+          python\python.cmd -u scripts\build\ci_build.py --platform ${{ inputs.platform }} --type asset_profile
+
+      - name: Save asset cache
+        # Only a successful asset phase uploads the asset cache, so partial assets never reach later runs
+        if: ${{ steps.build-assets.outcome == 'success' }}
+        continue-on-error: true
+        uses: ./.github/actions/save-artifact
+        with:
+          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-assets
+          path: AutomatedTesting/Cache
+          working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+
+      - name: Run tests
+        # Reuses the build folder of the build phase when run in the same job, otherwise builds the test suites
+        if: ${{ env.TEST_PHASE == 'true' }}
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        timeout-minutes: 330
+        run: |
+          python\python.cmd -u scripts\build\ci_build.py --platform ${{ inputs.platform }} --type test_cpu_profile

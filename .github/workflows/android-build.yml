@@ -11,44 +11,65 @@ name: Android Build
 # These jobs are to be triggered by ar.yml
 
 on:
-  workflow_dispatch:
   workflow_call:
-    inputs:
+    inputs: &inputs
       compiler:
-        required: true
+        description: Compiler to use
+        required: false
         type: string
+        default: clang
       config:
-        required: true
+        description: Configuration preset from scripts/build/Platform/Android/build_config.json (profile, release)
+        required: false
         type: string
+        default: profile
       image:
-        required: true
+        description: Runner image (ubuntu-22.04, ubuntu-24.04)
+        required: false
         type: string
+        default: ubuntu-22.04
       platform:
-        required: true
+        description: Platform to build
+        required: false
         type: string
+        default: Android
       type:
-        required: true
+        description: Build type (profile, asset_profile, gradle, profile_asset_gradle, release)
+        required: false
         type: string
-      last_artifact:
+        default: profile_asset_gradle
+      use_cache:
+        description: Restore the build and asset caches, otherwise start from a clean state
         required: false
         type: boolean
+        default: true
       clang_version:
+        description: Host clang major version to install, uses the runner compiler if empty
         required: false
         type: string
       ndk_version:
+        description: Android NDK version to install, uses the preinstalled NDK if empty
         required: false
         type: string
       cmake_version:
+        description: CMake version to install, uses the runner version if empty
         required: false
         type: string
       gradle_version:
+        description: Gradle version to install
         required: false
         type: string
+  workflow_dispatch:
+    inputs: *inputs
 
 run-name: ${{ inputs.platform }} - ${{ inputs.type }}
 
 env:
   NDK_VERSION: ${{ inputs.ndk_version }}
+  CMAKE_C_COMPILER_LAUNCHER: ccache
+  CMAKE_CXX_COMPILER_LAUNCHER: ccache
+  LY_3RDPARTY_PATH: ${{ github.workspace }}/3rdParty
+  LY_PACKAGE_SERVER_URLS: "https://d1gg6ket0m44ly.cloudfront.net;https://d3t6xeg4fgfoum.cloudfront.net"
 
 # Note: All 3P Github Actions use the commit hash for security reasons
 # Avoid using the tag version, which is vulnerable to supply chain attacks
@@ -56,6 +77,12 @@ env:
 jobs:
   Build:
     runs-on: ${{ inputs.image }}
+
+    env:
+      # Phases run by this job; profile_asset_gradle runs all of them in one job to share setup
+      BUILD_PHASE: ${{ inputs.type == 'profile' || inputs.type == 'profile_asset_gradle' }}
+      ASSET_PHASE: ${{ inputs.type == 'asset_profile' || inputs.type == 'profile_asset_gradle' }}
+      GRADLE_PHASE: ${{ inputs.type == 'gradle' || inputs.type == 'profile_asset_gradle' }}
 
     steps:
       - name: Check disk space
@@ -87,7 +114,7 @@ jobs:
           remove-docker-images: true
 
       - name: Checkout repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           show-progress: false
 
@@ -114,69 +141,33 @@ jobs:
             hash_dir=false
             max_size=10G
 
-      - name: Check for rerun
-        id: check-rerun
-        run: |
-          # GitHub sets GITHUB_RUN_ATTEMPT to track reruns
-          if [ "$GITHUB_RUN_ATTEMPT" -gt 1 ]; then
-            echo "is_rerun=true" >> $GITHUB_OUTPUT
-            echo "This is rerun attempt #$GITHUB_RUN_ATTEMPT"
-          else
-            echo "is_rerun=false" >> $GITHUB_OUTPUT
-            echo "This is the first run attempt"
-          fi
-
-      - name: Get last run
-        # Get the last runid of the target branch of a PR or the current branch
-        # Skip if this is a rerun to either freshly build or get artifacts from existing run
-        uses: dawidd6/action-download-artifact@07ab29fd4a977ae4d2b275087cf67563dfdf0295 # v9
-        id: last-run-id
-        if: ${{ inputs.last_artifact && steps.check-rerun.outputs.is_rerun != 'true' }}
-        continue-on-error: true
-        with:
-          workflow_search: true
-          workflow_conclusion: ""
-          branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
-          search_artifacts: true
-          check_artifacts: true
-          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          dry_run: true
-
-      - name: Set artifact run ID
-        # Set the run ID of the artifact to be used for the download step
-        id: set-artifact-run-id
-        if: steps.last-run-id.outcome == 'success' && inputs.last_artifact == true
-        run: |
-          runId=${{ fromJSON(steps.last-run-id.outputs.artifacts)[0].workflow_run.id }}
-          echo "artifact_run_id=$runId" >> $GITHUB_OUTPUT
-          echo "Using artifacts from previous run: $runId"
-
-      - name: Restore artifact cache
-        # Restore the artifact from the "Get last run" step or from the current run
-        id: restore-artifact-cache
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
-        continue-on-error: true
+      - name: Restore build cache
+        # Get the cache from an earlier job or attempt of this run, otherwise from the latest run of the target branch
+        # Skipped if use_cache is not set, to build from a clean state
+        if: ${{ inputs.use_cache }}
+        id: restore-build
+        uses: ./.github/actions/restore-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ steps.set-artifact-run-id.outputs.artifact_run_id || github.run_id }}
+          path: .ccache
 
-      - name: Extract artifact
-        # Extract the tar file from the artifact
-        id: extract-artifact
-        if: ${{ steps.restore-artifact-cache.outcome == 'success' }}
-        run: |
-          if ! tar -xvpf "${{ github.workspace }}/cache.tar"; then
-            echo "::warning::Ignoring invalid cache archive"
-            rm -rf .ccache .o3de/python/downloaded_packages 3rdParty/downloaded_packages AutomatedTesting/Cache
-          fi
-          rm -f "${{ github.workspace }}/cache.tar"
-          ccache --zero-stats --cleanup
+      - name: Reset ccache stats
+        if: ${{ steps.restore-build.outputs.restored == 'true' }}
+        run: ccache --zero-stats --cleanup
+
+      - name: Restore asset cache
+        # Get the assets from an earlier job or attempt of this run, otherwise from the latest run of the target branch
+        # Skipped if use_cache is not set, to process assets from a clean state
+        if: ${{ inputs.use_cache && (env.ASSET_PHASE == 'true' || env.GRADLE_PHASE == 'true') }}
+        uses: ./.github/actions/restore-artifact
+        with:
+          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-assets
+          path: AutomatedTesting/Cache
 
       - name: Setup cmake
         # Pin the version of cmake
         if: ${{ inputs.cmake_version }}
-        uses: lukka/get-cmake@f176ccd3f28bda569c43aae4894f06b2435a3375 # v4.2.3
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
         with:
           cmakeVersion: "${{ inputs.cmake_version }}"
           ninjaVersion: "1.13.2"
@@ -241,44 +232,45 @@ jobs:
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
           echo "USE_GRADLE_FROM_PATH=1" >> $GITHUB_ENV
 
-      - name: Build ${{ inputs.type }}
+      - name: Register engine
+        run: scripts/o3de.sh register --this-engine
+
+      - name: Build profile
         # Builds with presets in ../scripts/build/Platform/Android/build_config.json
-        id: build
+        id: build-profile
+        if: ${{ env.BUILD_PHASE == 'true' }}
         timeout-minutes: 330
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: ccache
-          CMAKE_CXX_COMPILER_LAUNCHER: ccache
-          LY_3RDPARTY_PATH: ${{ github.workspace }}/3rdParty
-          LY_PACKAGE_SERVER_URLS: "https://d1gg6ket0m44ly.cloudfront.net;https://d3t6xeg4fgfoum.cloudfront.net"
-        run: |
-          scripts/o3de.sh register --this-engine
-          python/python.sh -u scripts/build/ci_build.py --platform ${{ inputs.platform }} --type ${{ inputs.type }}
+        run: python/python.sh -u scripts/build/ci_build.py --platform ${{ inputs.platform }} --type profile
 
-      - name: Compress artifacts
-        # Compress with posix format to preserve permissions and timestamps at nanosecond precision
-        # Skip compression and upload if the type is a test to reduce dirty build artifacts from previous runs
-        id: compress-artifacts
-        if: ${{ (steps.extract-artifact.outcome == 'success' || steps.extract-artifact.outcome == 'skipped') && !cancelled() && !contains(inputs.type, 'test') }}
-        continue-on-error: true
-        run: |
-          if [[ "${{ steps.build.outcome }}" != "success" ]]; then
-            echo "::warning::Build step did not succeed. Clearing AutomatedTesting/Cache"
-            rm -rf AutomatedTesting/Cache
-          fi
-          mkdir -p .ccache .o3de/python/downloaded_packages 3rdParty/downloaded_packages AutomatedTesting/Cache
-          tar --format=posix -cvpf ${{ github.workspace }}/cache.tar \
-            .ccache \
-            .o3de/python/downloaded_packages \
-            3rdParty/downloaded_packages \
-            AutomatedTesting/Cache
+      - name: Process assets
+        # Builds the host AssetProcessorBatch in build/linux, separate from the Android build folder
+        id: build-assets
+        if: ${{ env.ASSET_PHASE == 'true' }}
+        timeout-minutes: 330
+        run: python/python.sh -u scripts/build/ci_build.py --platform ${{ inputs.platform }} --type asset_profile
 
-      - name: Save artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: ${{ steps.compress-artifacts.outcome == 'success' && !cancelled() && !contains(inputs.type, 'test') }}
+      - name: Save asset cache
+        # Only a successful asset phase uploads the asset cache, so partial assets never reach later runs
+        if: ${{ steps.build-assets.outcome == 'success' }}
         continue-on-error: true
+        uses: ./.github/actions/save-artifact
+        with:
+          name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-assets
+          path: AutomatedTesting/Cache
+
+      - name: Build gradle
+        # Generates and builds the gradle project in build/ad_grd
+        id: build-gradle
+        if: ${{ env.GRADLE_PHASE == 'true' }}
+        timeout-minutes: 330
+        run: python/python.sh -u scripts/build/ci_build.py --platform ${{ inputs.platform }} --type gradle
+
+      - name: Save build cache
+        # Only the build phase uploads the cache; later jobs in the run reuse it
+        # Saved after the asset and gradle phases to include the host and gradle native objects
+        if: ${{ !cancelled() && steps.build-profile.outcome != 'skipped' }}
+        continue-on-error: true
+        uses: ./.github/actions/save-artifact
         with:
           name: O3DE-${{ inputs.platform }}-${{ inputs.config }}-build
-          compression-level: 1
-          overwrite: true
-          path: |
-            ${{ github.workspace }}/cache.tar
+          path: .ccache

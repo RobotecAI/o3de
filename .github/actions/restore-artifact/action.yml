@@ -1,0 +1,89 @@
+#
+# Copyright (c) Contributors to the Open 3D Engine Project.
+# For complete copyright and license terms please see the LICENSE at the root of this distribution.
+#
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+#
+#
+
+name: Restore artifact
+description: >
+  Download a tar archive artifact from the current run, otherwise from the latest run of any workflow
+  on the target branch of a PR or the current branch, and extract it into the workspace
+
+inputs:
+  name:
+    description: Name of the artifact
+    required: true
+  path:
+    description: Paths stored in the archive, removed if the archive fails to extract
+    required: true
+  working-directory:
+    description: Directory to extract the archive into, defaults to the workspace
+    required: false
+    default: "."
+
+outputs:
+  restored:
+    description: "'true' if the artifact was downloaded and extracted"
+    value: ${{ steps.extract.outputs.restored }}
+
+# Note: All 3P Github Actions use the commit hash for security reasons
+# Avoid using the tag version, which is vulnerable to supply chain attacks
+
+runs:
+  using: composite
+  steps:
+    - name: Download current run artifact
+      # Get the artifact uploaded by previous jobs or earlier attempts of this run, if there is one
+      uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27
+      id: download-current-run
+      continue-on-error: true
+      with:
+        run_id: ${{ github.run_id }}
+        check_artifacts: true
+        name: ${{ inputs.name }}
+        path: ${{ runner.temp }}/${{ inputs.name }}
+        if_no_artifact_found: "ignore"
+
+    - name: Download branch fallback artifact
+      # Searches the runs of all workflows, so artifacts of ar.yml and ar-canary.yml are both used
+      uses: dawidd6/action-download-artifact@eab87c9830c39eff17e5a6eadb20bfb4bc880477 # v27
+      id: download-branch-fallback
+      if: ${{ steps.download-current-run.outputs.found_artifact != 'true' }}
+      continue-on-error: true
+      with:
+        workflow_search: true
+        workflow_conclusion: ""
+        branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
+        search_artifacts: true
+        check_artifacts: true
+        name: ${{ inputs.name }}
+        path: ${{ runner.temp }}/${{ inputs.name }}
+        if_no_artifact_found: "ignore"
+
+    - name: Extract artifact
+      # Extract the tar file from the artifact into the workspace
+      # Uses GNU tar on macOS and the native bsdtar on Windows, matching save-artifact
+      id: extract
+      if: ${{ steps.download-current-run.outputs.found_artifact == 'true' || steps.download-branch-fallback.outputs.found_artifact == 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        ARCHIVE_DIR: ${{ runner.temp }}/${{ inputs.name }}
+        ARCHIVE_PATHS: ${{ inputs.path }}
+      run: |
+        TAR=tar
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          TAR=gtar
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+          TAR=/c/Windows/System32/tar.exe
+          ARCHIVE_DIR=$(cygpath -u "$ARCHIVE_DIR")
+        fi
+        if "$TAR" -xvpf "$ARCHIVE_DIR"/*.tar; then
+          echo "restored=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "::warning::Ignoring invalid archive in ${{ inputs.name }}"
+          rm -rf $ARCHIVE_PATHS
+        fi
+        rm -rf "$ARCHIVE_DIR"

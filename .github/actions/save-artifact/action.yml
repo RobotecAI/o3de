@@ -1,0 +1,61 @@
+#
+# Copyright (c) Contributors to the Open 3D Engine Project.
+# For complete copyright and license terms please see the LICENSE at the root of this distribution.
+#
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+#
+#
+
+name: Save artifact
+description: Compress workspace paths into a tar archive and upload it as an artifact
+
+inputs:
+  name:
+    description: Name of the artifact
+    required: true
+  path:
+    description: Workspace paths to store in the archive
+    required: true
+  working-directory:
+    description: Directory the paths are relative to, defaults to the workspace
+    required: false
+    default: "."
+
+# Note: All 3P Github Actions use the commit hash for security reasons
+# Avoid using the tag version, which is vulnerable to supply chain attacks
+
+runs:
+  using: composite
+  steps:
+    - name: Compress artifact
+      # Compress with posix format to preserve permissions and timestamps at nanosecond precision
+      # Uses GNU tar on macOS to skip the extended attribute files of bsdtar, and the native bsdtar on Windows
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        ARCHIVE: ${{ runner.temp }}/${{ inputs.name }}.tar
+        ARCHIVE_PATHS: ${{ inputs.path }}
+      run: |
+        TAR=tar
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          TAR=gtar
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+          TAR=/c/Windows/System32/tar.exe
+          ARCHIVE=$(cygpath -u "$ARCHIVE")
+        fi
+        mkdir -p $ARCHIVE_PATHS
+        "$TAR" --format=posix -cvpf "$ARCHIVE" $ARCHIVE_PATHS
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ inputs.name }}
+        compression-level: 0
+        overwrite: true
+        path: ${{ runner.temp }}/${{ inputs.name }}.tar
+
+    - name: Remove archive
+      # Free the disk space for the following steps of the job
+      if: always()
+      shell: bash
+      run: rm -f "${{ runner.temp }}/${{ inputs.name }}.tar"
